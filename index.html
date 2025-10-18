@@ -94,7 +94,7 @@
             <div class="space-y-6">
                 <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
                     <h3 class="text-xl font-bold text-gray-900 mb-2">2.1. Funções Primárias da Missão</h3>
-                    <p class="text-gray-700">Priorize o código que coleta dados dos sensores (Carga Útil) e os armazena (no computador de bordo ou SD Card) e/ou os transmite (via LoRa). Use funções simples e bem comentadas.</p>
+                    <p class="text-gray-700">Priorize o código que coleta dados dos sensores (Carga Útil) e os armazena (no computador de bordo ou SD Card) e/ou os transmite (via Wifi). Use funções simples e bem comentadas.</p>
                 </div>
                 
                 <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
@@ -104,7 +104,7 @@
 
                 <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
                     <h3 class="text-xl font-bold text-gray-900 mb-2">2.3. Iniciando com Programação em Blocos (BIPES)</h3>
-                    <p class="text-gray-700">Para facilitar a codificação, utilize plataformas visuais como o **BIPES**. Comece pelo básico: crie blocos para inicializar seus sensores e o módulo LoRa. Em seguida, crie um loop para ler os dados dos sensores. O BIPES permite que você visualize a lógica antes de exportar o código final.</p>
+                    <p class="text-gray-700">Para facilitar a codificação, utilize plataformas visuais como o **BIPES**. Comece pelo básico: crie blocos para inicializar seus sensores e o módulo de Wifi. Em seguida, crie um loop para ler os dados dos sensores. O BIPES permite que você visualize a lógica antes de exportar o código final.</p>
                 </div>
             </div>
         </section>
@@ -134,7 +134,7 @@
                     <h3 class="text-xl font-bold text-blue-600 mb-2">Teste de Comunicação</h3>
                     <p class="text-gray-700 mb-2">Essencial para a missão: garantir que a Estação Terrestre (seu computador) pode receber os dados.</p>
                     <ul class="text-sm text-gray-600 list-disc list-inside">
-                        <li>**Teste de Alcance:** Comece com os módulos LoRa próximos e vá afastando-os (simulando distância) para determinar o alcance máximo confiável do seu sistema.</li>
+                        <li>**Teste de Alcance:** Comece com os módulos de transmissão por Wifi e vá afastando-os (simulando distância) para determinar o alcance máximo confiável do seu sistema.</li>
                         <li>**Taxa de Erro:** Envie um pacote de dados conhecido (ex: "ABC-123") mil vezes e conte quantos foram recebidos corretamente. Isso define a confiabilidade.</li>
                         <li>**Decodificação:** Certifique-se de que o software da Estação Terrestre decodifica os pacotes corretamente.</li>
                     </ul>
