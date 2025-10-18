@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Prático Fase 2 OBSAT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Tech Blue/Gray -->
+    <!-- Application Structure Plan: A single-page procedural guide for OBSAT Phase 2. Structure is sequential (Hardware -> Software -> Testing -> Documentation) using a fixed header and main content blocks. This structure is chosen to guide the user step-by-step through the practical execution. Key interactions include tabbed content for organizing testing steps and a simulated Gantt chart (Chart.js) to visualize project management. -->
+    <!-- Visualization & Content Choices: Report Info: Project timeline/Work division -> Goal: Visualize management and deadlines -> Method: Horizontal Bar Chart (simulating Gantt). Justification: Provides a clear, professional visual overview of project phasing. | Report Info: Testing procedures -> Goal: Inform detailed steps -> Method: Tabbed interface. Justification: Organizes complex technical instructions cleanly. | Report Info: Final documentation requirements -> Goal: Guide report structure -> Method: Numbered list with descriptive cards. Justification: Ensures all required items are covered for the final submission. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .nav-link.active {
+            color: #3b82f6; /* blue-500 */
+            font-weight: bold;
+            border-bottom: 2px solid #3b82f6;
+        }
+        .tab-button.active {
+            background-color: #3b82f6;
+            color: white;
+            font-weight: bold;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <header class="bg-white shadow-md sticky top-0 z-10">
+        <div class="container mx-auto px-4 sm:px-6 py-4">
+            <h1 class="text-3xl font-black text-gray-900">OBSAT: Guia Prático Fase 2</h1>
+            <nav class="mt-3 flex space-x-4 overflow-x-auto pb-2">
+                <a href="#intro" class="nav-link text-gray-600 px-3 py-1 transition-colors">Início</a>
+                <a href="#hardware" class="nav-link text-gray-600 px-3 py-1 transition-colors">Hardware & Montagem</a>
+                <a href="#software" class="nav-link text-gray-600 px-3 py-1 transition-colors">Programação</a>
+                <a href="#testes" class="nav-link text-gray-600 px-3 py-1 transition-colors">Testes & Validação</a>
+                <a href="#documentacao" class="nav-link text-gray-600 px-3 py-1 transition-colors">Documentação Final</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 py-8">
+        <section id="intro" class="p-6 bg-white rounded-xl shadow-lg mb-10">
+            <h2 class="text-3xl font-bold text-blue-700 mb-4">Bem-vindo à Fase de Execução!</h2>
+            <p class="text-lg text-gray-700 mb-4">A Fase 2 da OBSAT é onde o projeto teórico ganha vida. O trabalho deve ser entregue até **20 de Novembro**. Seu foco deve ser na montagem física (hardware), desenvolvimento do código (software) e testes rigorosos para validar a missão do seu satélite.</p>
+            <p class="text-gray-600">Este guia o levará através das etapas críticas da construção do seu CubeSat, CanSat ou PocketSat, garantindo que você não perca nenhum detalhe importante na jornada de engenharia.</p>
+        </section>
+
+        <!-- Seção 1: Hardware e Montagem -->
+        <section id="hardware" class="p-6 bg-white rounded-xl shadow-lg mb-10">
+            <h2 class="text-3xl font-bold text-blue-700 mb-6">1. Hardware e Montagem: Tirando a Ideia do Papel</h2>
+            <p class="text-gray-700 mb-6">Esta etapa exige precisão. Você precisa transformar os diagramas da Fase 1 em um protótipo funcional, priorizando a segurança e a organização dos componentes.</p>
+            
+            <div class="space-y-6">
+                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">1.1. Montagem Inicial (Breadboarding)</h3>
+                    <p class="text-gray-700">Comece montando todos os componentes eletrônicos em uma **protoboard (matriz de contatos)**. Isso permite que você teste o circuito e o código de forma segura, sem a necessidade de solda. Valide a conexão de cada sensor e atuador individualmente.</p>
+                </div>
+                
+                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">1.2. Integração e Soldagem</h3>
+                    <p class="text-gray-700">Após confirmar que tudo funciona na protoboard, migre o circuito para uma **placa de circuito impresso (PCB)** ou para uma **protoboard perfurada**. Use solda para conexões permanentes. Lembre-se: soldas limpas e firmes evitam falhas durante os testes de vibração (como o lançamento).</p>
+                </div>
+
+                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">1.3. Estrutura e Organização</h3>
+                    <p class="text-gray-700">Monte o hardware dentro da estrutura do satélite (CubeSat, CanSat ou PocketSat). Use abraçadeiras e cola quente (com moderação) para evitar que os componentes se movam. A organização interna é vital para o sucesso da missão.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 2: Programação (Software) -->
+        <section id="software" class="p-6 bg-white rounded-xl shadow-lg mb-10">
+            <h2 class="text-3xl font-bold text-blue-700 mb-6">2. Programação (Software): O Cérebro do Satélite</h2>
+            <p class="text-gray-700 mb-6">O código deve ser robusto e eficiente, executando as tarefas da missão e gerenciando a energia e comunicação do satélite.</p>
+            
+            <div class="space-y-6">
+                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">2.1. Funções Primárias da Missão</h3>
+                    <p class="text-gray-700">Priorize o código que coleta dados dos sensores (Carga Útil) e os armazena (no computador de bordo ou SD Card) e/ou os transmite (via LoRa). Use funções simples e bem comentadas.</p>
+                </div>
+                
+                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">2.2. Gestão de Energia e Falhas</h3>
+                    <p class="text-gray-700">Implemente um "modo de suspensão" no código (sleep mode) para economizar bateria quando o satélite não estiver coletando dados. Adicione rotinas para lidar com falhas (ex: se um sensor não responder, o código deve ignorar e continuar a missão).</p>
+                </div>
+
+                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">2.3. Iniciando com Programação em Blocos (BIPES)</h3>
+                    <p class="text-gray-700">Para facilitar a codificação, utilize plataformas visuais como o **BIPES**. Comece pelo básico: crie blocos para inicializar seus sensores e o módulo LoRa. Em seguida, crie um loop para ler os dados dos sensores. O BIPES permite que você visualize a lógica antes de exportar o código final.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 3: Testes e Validação -->
+        <section id="testes" class="p-6 bg-white rounded-xl shadow-lg mb-10">
+            <h2 class="text-3xl font-bold text-blue-700 mb-6">3. Testes e Validação: Garantindo o Sucesso</h2>
+            <p class="text-gray-700 mb-6">Testar é a única forma de garantir que seu satélite sobreviverá ao lançamento (simulado) e completará a missão. Clique nas abas para ver os testes essenciais:</p>
+
+            <div class="flex border-b border-gray-200">
+                <button class="tab-teste-button p-3 px-6 text-gray-600 hover:bg-gray-100 transition-colors" data-tab="bancada">Bancada (Bench)</button>
+                <button class="tab-teste-button p-3 px-6 text-gray-600 hover:bg-gray-100 transition-colors" data-tab="comunicacao-teste">Comunicação</button>
+                <button class="tab-teste-button p-3 px-6 text-gray-600 hover:bg-gray-100 transition-colors" data-tab="ambiental">Ambiental</button>
+            </div>
+            
+            <div id="tab-testes-content" class="mt-4 p-4 bg-gray-100 rounded-lg">
+                <div id="tab-bancada" class="tab-pane-teste hidden">
+                    <h3 class="text-xl font-bold text-blue-600 mb-2">Teste de Bancada (Bench Testing)</h3>
+                    <p class="text-gray-700 mb-2">É o teste inicial, realizado na mesa de trabalho, sem a necessidade de simular o ambiente de lançamento.</p>
+                    <ul class="text-sm text-gray-600 list-disc list-inside">
+                        <li>**Verificação de Sensores:** Use o Monitor Serial (Arduino) para confirmar que cada sensor está fornecendo leituras válidas e lógicas (ex: temperatura ambiente).</li>
+                        <li>**Consumo de Energia:** Meça a corrente em diferentes estados (ligado, sleep mode) para garantir que a bateria durará o tempo esperado.</li>
+                        <li>**Integridade do Código:** Verifique se o código executa todas as sequências corretamente, sem travar (loop infinito).</li>
+                    </ul>
+                </div>
+                <div id="tab-comunicacao-teste" class="tab-pane-teste hidden">
+                    <h3 class="text-xl font-bold text-blue-600 mb-2">Teste de Comunicação</h3>
+                    <p class="text-gray-700 mb-2">Essencial para a missão: garantir que a Estação Terrestre (seu computador) pode receber os dados.</p>
+                    <ul class="text-sm text-gray-600 list-disc list-inside">
+                        <li>**Teste de Alcance:** Comece com os módulos LoRa próximos e vá afastando-os (simulando distância) para determinar o alcance máximo confiável do seu sistema.</li>
+                        <li>**Taxa de Erro:** Envie um pacote de dados conhecido (ex: "ABC-123") mil vezes e conte quantos foram recebidos corretamente. Isso define a confiabilidade.</li>
+                        <li>**Decodificação:** Certifique-se de que o software da Estação Terrestre decodifica os pacotes corretamente.</li>
+                    </ul>
+                </div>
+                <div id="tab-ambiental" class="tab-pane-teste hidden">
+                    <h3 class="text-xl font-bold text-blue-600 mb-2">Teste Ambiental (Simulação)</h3>
+                    <p class="text-gray-700 mb-2">Simule as condições adversas do lançamento e do ambiente espacial (queda/altitude).</p>
+                    <ul class="text-sm text-gray-600 list-disc list-inside">
+                        <li>**Teste de Vibração/Choque:** Coloque o satélite dentro da estrutura e realize um teste de queda controlado (ou simulação de vibração) para garantir que nada se solta.</li>
+                        <li>**Teste Térmico:** Simule temperaturas extremas (colocando-o na geladeira/freezer por um tempo) e verifique se os sensores continuam funcionando.</li>
+                        <li>**Teste de Pressão/Altitude:** Para CanSats, simule a variação de pressão (altitude) para validar as leituras do sensor barométrico.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 4: Documentação Final -->
+        <section id="documentacao" class="p-6 bg-white rounded-xl shadow-lg mb-10">
+            <h2 class="text-3xl font-bold text-blue-700 mb-6">4. Documentação Final: O Relatório Técnico</h2>
+            <p class="text-gray-700 mb-6">O Relatório Final da Fase 2 deve ser a prova de que seu satélite funciona e precisa ser entregue até **20 de Novembro**. Ele deve ser detalhado e profissional.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">4.1. Conteúdo Essencial</h3>
+                    <ul class="text-gray-700 list-disc list-inside space-y-2">
+                        <li>**Detalhamento da Construção:** Explique a montagem (soldagem, organização dos fios) e a escolha dos materiais.</li>
+                        <li>**Código Fonte:** Inclua o código-fonte completo (ou um repositório GitHub) do satélite e da estação terrestre.</li>
+                        <li>**Resultados dos Testes:** Apresente tabelas e gráficos dos resultados de todos os testes (bancada, comunicação, ambiental).</li>
+                        <li>**Análise de Dados:** Mostre os dados coletados e as conclusões da missão.</li>
+                    </ul>
+                </div>
+                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">4.2. Visualização do Projeto (Gráfico de Projeto)</h3>
+                    <p class="text-gray-700 mb-3">Utilize um gráfico simples para mostrar como sua equipe dividiu o tempo na Fase 2. Isso demonstra organização e gestão de projetos.</p>
+                    <div class="chart-container">
+                        <canvas id="projectGanttChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section');
+            const tabButtons = document.querySelectorAll('.tab-teste-button');
+            const tabPanes = document.querySelectorAll('.tab-pane-teste');
+            
+            // ------------------ JS de Navegação e Tabs ------------------
+            function updateActiveLink() {
+                const scrollY = window.pageYOffset;
+                let foundActive = false;
+                sections.forEach(current => {
+                    const sectionHeight = current.offsetHeight;
+                    const sectionTop = current.offsetTop - 150; 
+                    const id = current.getAttribute('id');
+                    const navLink = document.querySelector(`.nav-link[href*=${id}]`);
+                    
+                    if (navLink) {
+                        if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight && !foundActive) {
+                            navLinks.forEach(link => link.classList.remove('active'));
+                            navLink.classList.add('active');
+                            foundActive = true; 
+                        } else if (!foundActive && scrollY > current.offsetTop + sectionHeight && current === sections[sections.length - 1]) {
+                            // Caso esteja no final da página
+                            navLinks.forEach(link => link.classList.remove('active'));
+                            document.querySelector('.nav-link[href="#documentacao"]').classList.add('active');
+                        }
+                    }
+                });
+                if (!foundActive) {
+                    navLinks.forEach(link => link.classList.remove('active'));
+                    document.querySelector('.nav-link[href="#intro"]').classList.add('active');
+                }
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetSection = document.getElementById(targetId);
+                    if (targetSection) {
+                        window.scrollTo({
+                            top: targetSection.offsetTop - 90,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+
+            window.addEventListener('scroll', updateActiveLink);
+            updateActiveLink();
+
+            // Tabs Logic
+            if (tabButtons.length > 0) {
+                tabButtons[0].classList.add('active');
+                
+                // CORREÇÃO: Usamos o data-tab para construir o ID do painel corretamente (ex: "tab-bancada").
+                const initialPaneId = 'tab-' + tabButtons[0].dataset.tab;
+                const initialPane = document.getElementById(initialPaneId);
+                
+                if (initialPane) {
+                    initialPane.classList.remove('hidden');
+                }
+            }
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tab = button.dataset.tab;
+
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    tabPanes.forEach(pane => pane.classList.add('hidden'));
+                    document.getElementById(`tab-${tab}`).classList.remove('hidden');
+                });
+            });
+
+            // ------------------ JS de Chart.js (Gráfico) ------------------
+            const ctx = document.getElementById('projectGanttChart').getContext('2d');
+            
+            // Dados simulados para o gráfico de Gantt da Fase 2 (Horizontal Bar)
+            const phase2Data = {
+                labels: ['Hardware/Montagem', 'Programação', 'Testes de Bancada', 'Testes de Campo', 'Documentação'],
+                datasets: [{
+                    label: 'Semanas de Execução',
+                    data: [80, 70, 90, 60, 50], 
+                    backgroundColor: [
+                        '#3b82f6', // blue-500
+                        '#10b981', // emerald-500
+                        '#f59e0b', // amber-500
+                        '#ef4444', // red-500
+                        '#8b5cf6'  // violet-500
+                    ],
+                    borderColor: '#ffffff',
+                    borderWidth: 1,
+                    barThickness: 30 
+                }]
+            };
+
+            const projectGanttChart = new Chart(ctx, {
+                type: 'bar',
+                data: phase2Data,
+                options: {
+                    indexAxis: 'y', // Faz o gráfico ser horizontal (simulando Gantt)
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Divisão de Tempo Estimada na Fase 2',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        label += context.parsed.x + '% do esforço total';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Esforço (%)'
+                            },
+                            grid: {
+                                display: false 
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false 
+                            }
+                        }
+                    }
+                },
+            });
+
+            // Mostra o primeiro painel de teste por padrão
+            document.querySelector('.tab-teste-button').click();
+        });
+    </script>
+</body>
+</html>
