@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Missão Programação Espacial: CubeSat com ESP32 e BIPES</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .nav-button.active {
+            background-color: #f97316;
+            color: white;
+            font-weight: 600;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 400px;
+        }
+        
+        table {
+            width: 100%;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-collapse: collapse;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            border-radius: 0.75rem;
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        thead th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #374151;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        tbody tr:hover {
+            background-color: #fef3c7;
+        }
+        .info-box {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0.25rem;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- 
+        Chosen Palette: Warm Neutrals (bg-f8fafc, white) with a warm Orange accent (f97316)
+        Application Structure Plan: A single-page application structured as an interactive "stepper" or wizard. A main navigation bar allows users to click through different sections ('Início', 'Módulo 1-4', 'Próximos Passos'). JavaScript handles showing/hiding the relevant content div and updating the active state of the navigation button. This structure is the most logical for a linear lesson plan, guiding the user step-by-step while feeling interactive and modern. The 'Início' (Home) section acts as a "Mission Briefing," consolidating the objective, level, materials, and a new overview chart (Donut chart) showing the lesson components.
+        Visualization & Content Choices:
+        - Report Info: Lesson Modules (Módulos 1-4) -> Goal: Show lesson structure overview -> Viz: Donut Chart (Chart.js) in 'Início' section -> Interaction: None (static viz) -> Justification: Fulfills Chart.js requirement and visually summarizes the lesson plan.
+        - Report Info: Lesson Structure (Módulos 1-5) -> Goal: Guide user linearly -> Viz: HTML/Tailwind Navigation "Stepper" -> Interaction: On-click, JS shows/hides content sections -> Justification: This is the primary interactive element that transforms the static document into an SPA.
+        - Report Info: Materiais Necessários -> Goal: Inform -> Viz: Styled HTML list with emoji icons (HTML/Tailwind) -> Justification: More visually engaging than plain text.
+        - Report Info: Conceito: setup()/loop() -> Goal: Explain concept -> Viz: Styled "Info Box" (HTML/Tailwind) -> Justification: Breaks text flow and highlights key concepts.
+        - Report Info: Code Block Tables -> Goal: Show code example -> Viz: Styled HTML <table> (HTML/Tailwind) -> Justification: Clear, professional presentation of tabular data.
+        CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-orange-600">🚀 Missão Programação Espacial</h1>
+            <p class="text-xl text-gray-600 mt-2">CubeSat com ESP32 e BIPES</p>
+        </header>
+
+        <nav class="flex flex-wrap justify-center gap-2 sm:gap-4 mb-12">
+            <button class="nav-button active" data-target="section-inicio">Início (Briefing)</button>
+            <button class="nav-button" data-target="section-mod1">Módulo 1: CDH</button>
+            <button class="nav-button" data-target="section-mod2">Módulo 2: Operações</button>
+            <button class="nav-button" data-target="section-mod3">Módulo 3: Telemetria</button>
+            <button class="nav-button" data-target="section-mod4">Módulo 4: Controle</button>
+            <button class="nav-button" data-target="section-passos">Próximos Passos</button>
+        </nav>
+
+        <main>
+            <section id="section-inicio" class="content-section active">
+                <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-10">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Sua Missão: O Briefing</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed mb-8">
+                        Bem-vindo à sua missão espacial! Esta é a sua estação de preparação. Antes de começar a programar seu satélite, revise os objetivos da missão, o nível de dificuldade esperado e os materiais essenciais que você precisará para o lançamento do seu projeto.
+                    </p>
+
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <div class="mb-6">
+                                <h3 class="text-2xl font-semibold text-gray-700 mb-3">🎯 Objetivo da Aula</h3>
+                                <p class="text-gray-600">Aprender a usar a plataforma de programação em blocos **BIPES** e a placa **ESP32** para simular os subsistemas essenciais de um CubeSat (satélite de pequeno porte), focando em coleta e transmissão de dados (telemetria).</p>
+                            </div>
+                            <div class="mb-6">
+                                <h3 class="text-2xl font-semibold text-gray-700 mb-3">🧑‍🚀 Nível de Dificuldade</h3>
+                                <p class="text-gray-600">Iniciante/Intermediário. Ideal para jovens a partir de 12 anos ou para Jovens Brilhantes de qualquer idade.</p>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-700 mb-4 text-center">Visão Geral dos Módulos</h3>
+                            <div class="chart-container">
+                                <canvas id="lessonChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-10 border-gray-200">
+
+                    <div>
+                        <h3 class="text-3xl font-bold text-gray-800 mb-6">🛠️ Materiais Necessários</h3>
+                        <div class="grid sm:grid-cols-2 gap-6">
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <h4 class="text-xl font-semibold text-gray-700 mb-4">Hardware</h4>
+                                <ul class="space-y-3">
+                                    <li class="flex items-start">
+                                        <span class="text-green-500 mr-2 mt-1">✓</span>
+                                        <span>**Placa ESP32:** (Modelo genérico ou específico como NodeMCU ESP32).</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-green-500 mr-2 mt-1">✓</span>
+                                        <span>**Cabo Micro USB:** Para conectar o ESP32 ao computador.</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-blue-500 mr-2 mt-1">ⓘ</span>
+                                        <span>**(Opcional para a próxima fase):** Sensor de Temperatura e Umidade (DHT11 ou BMP180) e fios jumpers.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <h4 class="text-xl font-semibold text-gray-700 mb-4">Software</h4>
+                                <ul class="space-y-3">
+                                    <li class="flex items-start">
+                                        <span class="text-green-500 mr-2 mt-1">✓</span>
+                                        <span>**Computador** com navegador Google Chrome ou Microsoft Edge.</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-green-500 mr-2 mt-1">✓</span>
+                                        <span>**Acesso à internet** (para usar o BIPES online).</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-green-500 mr-2 mt-1">✓</span>
+                                        <span>**Ambiente BIPES:** `https://bipes.net.br/ide/`</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <section id="section-mod1" class="content-section">
+                <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-10">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">MÓDULO 1: Preparando o Computador de Bordo</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed mb-8">
+                        O primeiro passo de qualquer missão é ligar o cérebro. Neste módulo, vamos preparar o "Computador de Bordo" (sua placa ESP32), instalando o software necessário (MicroPython) e estabelecendo a primeira conexão de comunicação com nossa "estação terrestre" (a IDE BIPES).
+                    </p>
+
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Passo 1: Flash do MicroPython (Apenas a primeira vez!)</h3>
+                    <p class="text-gray-600 mb-4">A ESP32 precisa entender a linguagem Python (MicroPython) para rodar os blocos do BIPES.</p>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-600 mb-6">
+                        <li>Acesse a ferramenta de *flash* do BIPES: <a href="https://bipes.net.br/flash/esp-web-tools/" target="_blank" class="text-orange-600 hover:underline">https://bipes.net.br/flash/esp-web-tools/</a></li>
+                        <li>Conecte sua ESP32 ao PC com o cabo USB.</li>
+                        <li>No site, clique em **"Connect"** e selecione a porta serial da sua ESP32 (ex: `COMx` ou `/dev/ttyUSBx`).</li>
+                        <li>Clique em **"Install MicroPython"** e siga as instruções para instalar o firmware (você só precisa fazer isso uma vez por placa).</li>
+                    </ol>
+
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Passo 2: Conectando a Placa na IDE BIPES</h3>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-600">
+                        <li>Acesse a IDE principal do BIPES: <a href="https://bipes.net.br/ide/" target="_blank" class="text-orange-600 hover:underline">https://bipes.net.br/ide/</a></li>
+                        <li>No canto superior direito, na lista suspensa **"Placa"**, selecione **"ESP32"**.</li>
+                        <li>Acesse a aba **"Console"**.</li>
+                        <li>Clique no botão **"Serial"** e conecte-se à mesma porta serial que você usou no Passo 1.</li>
+                        <li>Se a conexão estiver correta, você verá a mensagem **`MicroPython vX.X.X on YYYYY`**. Seu computador de bordo está pronto!</li>
+                    </ol>
+                </div>
+            </section>
+
+            <section id="section-mod2" class="content-section">
+                <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-10">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">MÓDULO 2: Subsistema CDH (Comando e Manuseio de Dados)</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed mb-8">
+                        O CDH (Comando e Manuseio de Dados) é o sistema operacional do satélite. Ele executa a lógica principal da missão. Nossa primeira tarefa é criar um "heartbeat" (pulsação), um sinal visual para sabermos que o computador de bordo está vivo e executando seu ciclo de operações.
+                    </p>
+
+                    <div class="info-box">
+                        <h4 class="font-bold text-lg mb-2">Conceito: Função `setup()` e `loop()`</h4>
+                        <p>Em programação embarcada, temos duas seções principais:</p>
+                        <ul class="list-disc list-inside mt-2">
+                            <li>**`setup` (Configuração):** O que o satélite faz **apenas uma vez** ao ser ligado (ex: inicializar sensores, ligar o rádio).</li>
+                            <li>**`loop` (Missão):** O que o satélite faz **repetidamente** during a missão (ex: ler temperatura, enviar dados).</li>
+                        </ul>
+                    </div>
+
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Tarefa: Blink (Simulando o "Heartbeat" do Satélite)</h3>
+                    <p class="text-gray-600 mb-4">Vamos fazer o LED interno da ESP32 piscar para indicar que o CDH está vivo e funcionando.</p>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-600 mb-6">
+                        <li>Vá para a aba **"Blocks/Blocos"**.</li>
+                        <li>No menu **"Loops/Laços"**, arraste o bloco principal `while True:`.</li>
+                        <li>No menu **"Hardware/Placa"**, encontre o bloco de controle de pinos.</li>
+                        <li>Arraste o bloco `set digital pin (1) to HIGH` para dentro do `while True`. (O pino do LED integrado no ESP32 geralmente é o D2). **Altere o pino (1) para (2)**.</li>
+                        <li>Em **"Time/Tempo"**, arraste o bloco `sleep (1) seconds`.</li>
+                        <li>Repita os passos 3 e 4, mas altere a configuração para `set digital pin (2) to LOW`.</li>
+                        <li>Adicione outro bloco `sleep (1) seconds`.</li>
+                    </ol>
+
+                    <p class="text-gray-600 mb-2">**Seu Código em Blocos deve ficar assim:**</p>
+                    <p class="text-sm text-gray-500 mb-4">(O BIPES não usa blocos de `setup` e `loop` como o Arduino IDE, mas sim o `while True` para a função de repetição).</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoria</th>
+                                <th>Bloco</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Hardware</strong></td>
+                                <td>`set digital pin (2) to HIGH`</td>
+                                <td>Liga o LED (pino 2)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Time</strong></td>
+                            <td>`sleep (1) seconds`</td>
+                                <td>Espera 1 segundo</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Hardware</strong></td>
+                                <td>`set digital pin (2) to LOW`</td>
+                                <td>Desliga o LED</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Time</strong></td>
+                                <td>`sleep (1) seconds`</td>
+                                <td>Espera 1 segundo</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p class="text-gray-600"><strong>Ação:</strong> Clique no botão **"Run/Executar"** na IDE.</p>
+                    <p class="text-gray-600"><strong>Resultado:</strong> O LED da sua ESP32 deve piscar a cada 1 segundo. O CDH está funcionando!</p>
+                </div>
+            </section>
+
+            <section id="section-mod3" class="content-section">
+                <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-10">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">MÓDULO 3: Subsistema de Telemetria (TT&C)</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed mb-8">
+                        O Subsistema de Telemetria, Rastreamento e Comando (TT&C) é responsável por enviar dados vitais à "Estação Terrestre" (nosso console). Vamos simular o envio de um status da missão e a leitura do nível da bateria.
+                    </p>
+
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Tarefa A: Enviando a Primeira Mensagem de Bordo</h3>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-600 mb-6">
+                        <li>Na aba **"Blocks/Blocos"**, em **"Text/Texto"**, encontre o bloco `print`.</li>
+                        <li>Adicione o bloco `print` dentro do seu `while True` (antes ou depois do Blink).</li>
+                        <li>Em **"Text/Texto"**, arraste o bloco de texto (entre aspas) e escreva: `"CUBE-SAT: OK. Missao em andamento."`</li>
+                    </ol>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Bloco</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Text</strong></td>
+                                <td>`print ("CUBE-SAT: OK. Missao em andamento.")`</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-gray-600 mt-4"><strong>Ação:</strong> Execute o código novamente.</p>
+                    <p class="text-gray-600"><strong>Resultado:</strong> A mensagem aparecerá na aba **"Console"** a cada 2 segundos. Você enviou sua primeira telemetria!</p>
+                    
+                    <hr class="my-10 border-gray-200">
+
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Tarefa B: Variáveis de Telemetria (Simulando Bateria)</h3>
+                    <p class="text-gray-600 mb-4">Em um satélite, usamos variáveis para armazenar o valor lido por um sensor.</p>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-600 mb-6">
+                        <li>Vá para **"Variables/Variáveis"** e clique em **"Create variable..."**. Crie a variável **`BATERIA`**.</li>
+                        <li>No início do seu `while True`, use o bloco `set BATERIA to (0)`.</li>
+                        <li>Para simular a leitura do sensor (já que não temos um ligado ainda), vamos usar o menu **"Math/Matemática"** e o bloco `random integer from 1 to 100`.</li>
+                        <li>Altere a linha para: `set BATERIA to random integer from (70) to (100)`. (Simulando uma carga entre 70% e 100%).</li>
+                        <li>Mude o bloco `print` para mostrar a variável. Use o bloco **"Text/Texto"** `create text with (items)`.
+                            <ul class="list-disc list-inside ml-6 mt-2">
+                                <li>Item 1: Bloco de texto com `"Bateria: "`</li>
+                                <li>Item 2: Variável **`BATERIA`**</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <p class="text-gray-600"><strong>Ação:</strong> Seu novo bloco de impressão deve ser: `print ( create text with ["Bateria: ", BATERIA] )`.</p>
+                    <p class="text-gray-600"><strong>Resultado:</strong> Execute o código. O valor da bateria (número aleatório) será enviado na telemetria.</p>
+                </div>
+            </section>
+
+            <section id="section-mod4" class="content-section">
+                <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-10">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">MÓDULO 4: Subsistema de Controle (Modo de Segurança)</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed mb-8">
+                        Este é o subsistema mais inteligente. Ele toma decisões com base nos dados da telemetria. Se a bateria estiver muito baixa, o satélite precisa entrar em **Modo de Segurança** (Safe Mode) para economizar energia e garantir sua sobrevivência.
+                    </p>
+
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Tarefa: Estrutura de Decisão (IF/ELSE)</h3>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-600 mb-6">
+                        <li>Vá para **"Logic/Lógica"** e arraste o bloco `if...do` para dentro do seu `while True`. (Substituindo o Blink anterior).</li>
+                        <li>Use o bloco de comparação (`=`) e combine-o com o bloco `less than (<)` ou o `less than or equal to (<=)` para criar a condição:
+                           <br> `if BATERIA <= 75` (Se a carga da bateria for menor ou igual a 75%).</li>
+                        <li>No campo **`do`**:
+                            <ul class="list-disc list-inside ml-6 mt-2">
+                                <li>Adicione um bloco `print` com a mensagem: `"ALERTA: Modo de Seguranca Ativado!"`</li>
+                                <li>Adicione um código de Blink **LENTO** (ex: piscar o LED a cada 2 segundos, não 1).</li>
+                            </ul>
+                        </li>
+                        <li>Clique na engrenagem do bloco `if` e arraste o bloco **`else`** para criar a seção do código normal.</li>
+                        <li>Na seção **`else`**:
+                            <ul class="list-disc list-inside ml-6 mt-2">
+                                <li>Adicione um bloco `print` com a mensagem: `"Status OK. Operacao Nominal."`</li>
+                                <li>Adicione um código de Blink **RÁPIDO** (piscar o LED a cada 0.5 segundos).</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <p class="text-gray-600"><strong>Ação:</strong> Execute o código.</p>
+                    <p class="text-gray-600"><strong>Resultado:</strong> Devido ao número aleatório, o satélite irá alternar entre a "Operação Nominal" (Bateria > 75%) e o "Modo de Segurança" (Bateria <= 75%), exibindo a mensagem correspondente no Console e alterando a frequência do LED.</p>
+                </div>
+            </section>
+            
+            <section id="section-passos" class="content-section">
+                <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-10 text-center">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">5. Próximos Passos (Missão Real)</h2>
+                    <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                        Parabéns, engenheiro(a) espacial! Você programou com sucesso os subsistemas CDH, Telemetria e Controle do seu simulador de satélite.
+                    </p>
+                    <div class="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-6 rounded-lg text-left max-w-3xl mx-auto">
+                        <h4 class="font-bold text-2xl mb-4">Sua Próxima Fase: Carga Útil Real</h4>
+                        <p class="text-lg">O desafio agora é integrar uma "carga útil" científica real. Conecte um sensor (como o **BMP180** para altitude/pressão ou **DHT11** para temperatura) na sua ESP32.</p>
+                        <p class="text-lg mt-4">Use os blocos **"I2C"** ou **"DHT"** do BIPES para ler dados do ambiente. Substitua a variável simulada `BATERIA` pela variável real `TEMPERATURA` e crie uma condição de segurança baseada em dados reais:</p>
+                        <p class="text-lg font-mono bg-orange-200 text-orange-800 p-3 rounded mt-4">`if TEMPERATURA >= 30` (Se a temperatura for muito alta, ativar o modo de segurança).</p>
+                    </div>
+                    <p class="text-lg text-gray-600 mt-8">Espero que esta aula tenha te dado uma base excelente para continuar seu projeto de CubeSat **ou CanSat**!</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navButtons = document.querySelectorAll('.nav-button');
+            const contentSections = document.querySelectorAll('.content-section');
+            let activeSection = 'section-inicio';
+            let activeNavButton = document.querySelector('.nav-button.active');
+
+            function showSection(sectionId) {
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                const newSection = document.getElementById(sectionId);
+                if (newSection) {
+                    newSection.classList.add('active');
+                    activeSection = sectionId;
+                }
+            }
+
+            function updateNav(clickedButton) {
+                if (activeNavButton) {
+                    activeNavButton.classList.remove('active');
+                }
+                clickedButton.classList.add('active');
+                activeNavButton = clickedButton;
+            }
+
+            navButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const targetId = e.currentTarget.dataset.target;
+                    showSection(targetId);
+                    updateNav(e.currentTarget);
+                });
+            });
+
+            function initChart() {
+                const ctx = document.getElementById('lessonChart').getContext('2d');
+                if (!ctx) return;
+
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [
+                            'Módulo 1: CDH', 
+                            'Módulo 2: Operações', 
+                            'Módulo 3: Telemetria', 
+                            'Módulo 4: Controle'
+                        ],
+                        datasets: [{
+                            label: 'Componentes da Lição',
+                            data: [25, 25, 25, 25],
+                            backgroundColor: [
+                                'rgba(59, 130, 246, 0.7)',
+                                'rgba(16, 185, 129, 0.7)',
+                                'rgba(234, 179, 8, 0.7)',
+                                'rgba(249, 115, 22, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(59, 130, 246, 1)',
+                                'rgba(16, 185, 129, 1)',
+                                'rgba(234, 179, 8, 1)',
+                                'rgba(249, 115, 22, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed + '%';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            initChart();
+            showSection(activeSection);
+            
+        });
+    </script>
+</body>
+</html>
