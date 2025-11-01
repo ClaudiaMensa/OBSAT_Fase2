@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Missão 2: Treinamento Avançado com ESP32 e BIPES</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .nav-button {
+            transition: background-color 0.2s, color 0.2s;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            color: #4b5563;
+            background-color: #f3f4f6;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .nav-button:hover {
+            background-color: #e5e7eb;
+        }
+        .nav-button.active {
+            background-color: #10b981; /* Tailwind emerald-500 */
+            color: white;
+            font-weight: 600;
+        }
+        .content-section {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .content-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        table {
+            width: 100%;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-collapse: collapse;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        thead th {
+            background-color: #d1fae5; /* Tailwind emerald-100 */
+            font-weight: 600;
+            color: #065f46;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        .info-box {
+            background-color: #f0fdf4; /* Tailwind emerald-50 */
+            border-left: 4px solid #10b981;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+            color: #065f46;
+        }
+        .danger-box {
+            background-color: #fef2f2; /* Tailwind red-50 */
+            border-left: 4px solid #ef4444; /* Tailwind red-500 */
+            color: #b91c1c; /* Tailwind red-700 */
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- 
+        Chosen Palette: Minty Greens (emerald-50, emerald-500) with Neutrals (f8fafc, white) for a clean, tech-focused look.
+        Application Structure Plan: Structured as a navigable "Centro de Controle" with a side-scrolling horizontal navigation bar for quick access to training modules. The 'Início' serves as the mission briefing and visualizes the curriculum progress. The structure prioritizes easy access to specific, practical block examples, making the lesson non-linear and explorable.
+        Visualization & Content Choices:
+        - Report Info: Lesson Modules (Módulos 1-4) -> Goal: Show training structure overview -> Viz: Donut Chart (Chart.js) in 'Início' section -> Interaction: None (static viz) -> Justification: Visually summarizes the complex curriculum.
+        - Report Info: Practical Examples -> Goal: Provide interactive code examples -> Viz: Styled HTML Tables (HTML/Tailwind) -> Interaction: User must manually execute the code in the BIPES IDE. -> Justification: Tables are the clearest way to present block sequences.
+        - Report Info: Hardware Warnings (Pinagem) -> Goal: Prevent user hardware errors -> Viz: Critical Danger Box (HTML/Tailwind) -> Interaction: Requires user attention before proceeding.
+        - Report Info: Navigation -> Goal: Guide user linearly -> Viz: Horizontal scrolling Nav Bar (HTML/Tailwind + JS) -> Interaction: On-click, JS shows/hides content sections.
+        CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-emerald-600">📡 Missão 2: Treinamento Avançado</h1>
+            <p class="text-xl text-gray-600 mt-2">Explorando o Potencial da ESP32 com Blocos BIPES</p>
+        </header>
+
+        <nav class="flex overflow-x-auto justify-center gap-2 sm:gap-4 pb-4 mb-12">
+            <button class="nav-button active whitespace-nowrap" data-target="section-inicio">Início (Briefing)</button>
+            <button class="nav-button whitespace-nowrap" data-target="section-mod1">Módulo 1: Wi-Fi e BLE</button>
+            <button class="nav-button whitespace-nowrap" data-target="section-mod2">Módulo 2: Controle de LED</button>
+            <button class="nav-button whitespace-nowrap" data-target="section-mod3">Módulo 3: Leitura de Sensores</button>
+            <button class="nav-button whitespace-nowrap" data-target="section-mod4">Módulo 4: Comunicação Avançada</button>
+            <button class="nav-button whitespace-nowrap" data-target="section-passos">Próximos Passos</button>
+        </nav>
+
+        <main>
+            <section id="section-inicio" class="content-section active">
+                <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-10">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Centro de Controle: Visão Geral</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed mb-8">
+                        Seu ESP32 está conectado! Esta fase do treinamento foca em explorar a conectividade e a interação direta com o hardware. Você aprenderá a fazer o ESP32 se comunicar com o mundo (Wi-Fi/Bluetooth) e com seus sensores (pinos I/O).
+                    </p>
+
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <div class="mb-6">
+                                <h3 class="text-2xl font-semibold text-gray-700 mb-3">🎯 Foco da Missão</h3>
+                                <p class="text-gray-600">Domínio da **Comunicação sem Fio** (Wi-Fi e BLE) e **Controle de Periféricos** (LEDs e Sensores), fundamentais para qualquer subsistema de satélite.</p>
+                            </div>
+                            <div class="mb-6">
+                                <h3 class="2xl font-semibold text-gray-700 mb-3">⚙️ Pré-Requisitos</h3>
+                                <p class="text-gray-600">ESP32 com MicroPython instalado e conectado via Serial no Console do BIPES (Conforme Missão 1).</p>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-700 mb-4 text-center">Progresso de Treinamento</h3>
+                            <div class="chart-container">
+                                <canvas id="lessonChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-mod1" class="content-section">
+                <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-10">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">MÓDULO 1: Comunicação sem Fio (Wi-Fi e BLE)</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed mb-8">
+                        A conectividade é o subsistema TT&C do seu satélite. O ESP32 possui Wi-Fi e Bluetooth integrados, permitindo enviar telemetria a longas distâncias (simuladas) e comandos em curtas distâncias.
+                    </p>
+
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Exemplo A: Conexão Wi-Fi (Telemetria Remota)</h3>
+                    <p class="text-gray-600 mb-4">Simulação de conexão à rede da estação terrestre para enviar dados via internet.</p>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoria/Bloco</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>**WIFI**</td>
+                                <td>`connect to Wi-Fi with SSID: "nome_do_wifi" and password: "senha"`</td>
+                            </tr>
+                            <tr>
+                                <td>**Time**</td>
+                                <td>`wait until Wi-Fi is connected`</td>
+                            </tr>
+                            <tr>
+                                <td>**Text**</td>
+                                <td>`print ("Conexao Wi-Fi OK! IP: " + get Wi-Fi IP)`</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-gray-600 mt-4">**Instruções:** Altere `"nome_do_wifi"` e `"senha"` para suas credenciais reais. Execute. Verifique o endereço IP no Console do BIPES.</p>
+
+                    <hr class="my-10 border-gray-200">
+
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Exemplo B: Bluetooth (Comando de Curto Alcance)</h3>
+                    <p class="text-gray-600 mb-4">Simulação de comando recebido por um dispositivo próximo.</p>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoria/Bloco</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>**Bluetooth**</td>
+                                <td>`set Bluetooth name to "CUBESAT-TREINAMENTO"`</td>
+                            </tr>
+                            <tr>
+                                <td>**Bluetooth**</td>
+                                <td>`on message received (message)`</td>
+                            </tr>
+                            <tr>
+                                <td>**Logic (Dentro do on message)**</td>
+                                <td>`if message equals "status"`</td>
+                            </tr>
+                            <tr>
+                                <td>**Text (Dentro do if)**</td>
+                                <td>`print ("Comando recebido: Status OK!")`</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-gray-600 mt-4">**Instruções:** Depois de executar, use um aplicativo de terminal Bluetooth no seu celular para conectar-se ao "CUBESAT-TREINAMENTO" e envie a palavra **`status`** para acionar a resposta no console do BIPES.</p>
+                </div>
+            </section>
+
+            <section id="section-mod2" class="content-section">
+                <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-10">
+                    <h2 class="3xl font-bold text-gray-800 mb-6">MÓDULO 2: Controle de LED (Subsistema de Atuadores)</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed mb-8">
+                        Acender um LED é o "Hello World" do controle de hardware. LEDs podem simular o acionamento de um motor, um magnetorquer (para controle de atitude) ou a abertura de uma antena.
+                    </p>
+
+                    <div class="danger-box">
+                        <h4 class="font-bold text-lg mb-2">⚠️ Atenção à Pinagem!</h4>
+                        <p>O número do pino do LED integrado (**LED ONBOARD**) varia muito no ESP32-C3. Pode ser o **GPIO8** ou outro. Consulte o esquema da sua placa. Se não souber, teste o GPIO2, GPIO13 e GPIO8 até encontrar o LED integrado.</p>
+                    </div>
+
+                    <h3 class="2xl font-semibold text-gray-700 mb-4">Exemplo C: Sequência de Atuadores (Piscar 3 Vezes)</h3>
+                    <p class="text-gray-600 mb-4">Simulando a sequência de acionamento de três atuadores em série (ex: liberação da antena, ignição, início da missão).</p>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoria/Bloco</th>
+                                <th>Ação (Substitua `2` pelo seu pino de LED)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>**Loops**</td>
+                                <td>`repeat 3 times`</td>
+                            </tr>
+                            <tr>
+                                <td>**Hardware (Dentro do Loop)**</td>
+                                <td>`set digital pin (2) to HIGH` (Atuador 1 ON)</td>
+                            </tr>
+                            <tr>
+                                <td>**Time**</td>
+                                <td>`sleep (0.2) seconds`</td>
+                            </tr>
+                            <tr>
+                                <td>**Hardware**</td>
+                                <td>`set digital pin (2) to LOW` (Atuador 1 OFF)</td>
+                            </tr>
+                            <tr>
+                                <td>**Time**</td>
+                                <td>`sleep (0.2) seconds`</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-gray-600 mt-4">**Instruções:** Execute. O LED piscará rapidamente 3 vezes e parará. Seu programa de inicialização está completo!</p>
+                </div>
+            </section>
+
+            <section id="section-mod3" class="content-section">
+                <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-10">
+                    <h2 class="3xl font-bold text-gray-800 mb-6">MÓDULO 3: Leitura de Sensores (Carga Útil)</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed mb-8">
+                        A "carga útil" é o que o satélite faz. Vamos conectar sensores para ler dados do mundo real. O ESP32 se comunica com sensores através de pinos digitais (HIGH/LOW), analógicos (valores 0-4095) e protocolos (I2C/SPI).
+                    </p>
+
+                    <div class="danger-box">
+                        <h4 class="font-bold text-lg mb-2">⚠️ Pino Analógico (Leitura da Bateria)</h4>
+                        <p>Para ler a bateria (ou sensores simples), você usa um pino analógico (**ADC**). Os pinos analógicos do ESP32-C3 geralmente são **GPIO0, GPIO1, GPIO2, GPIO3, etc.** Consulte o diagrama da sua placa para um pino ADC livre.</p>
+                    </div>
+
+                    <h3 class="2xl font-semibold text-gray-700 mb-4">Exemplo D: Leitura de Sensor Analógico (Nível de Luz)</h3>
+                    <p class="text-gray-600 mb-4">Simulação de leitura do nível de bateria ou intensidade de luz, lendo a tensão de um pino.</p>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoria/Bloco</th>
+                                <th>Ação (Substitua `GPIO0` pelo seu pino ADC)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>**Variáveis**</td>
+                                <td>`create variable: LUZ`</td>
+                            </tr>
+                            <tr>
+                                <td>**Loops**</td>
+                                <td>`while True:`</td>
+                            </tr>
+                            <tr>
+                                <td>**Hardware (Dentro do Loop)**</td>
+                                <td>`set LUZ to read analog pin (GPIO0)`</td>
+                            </tr>
+                            <tr>
+                                <td>**Text**</td>
+                                <td>`print ( create text with ["Intensidade de Luz: ", LUZ] )`</td>
+                            </tr>
+                            <tr>
+                                <td>**Time**</td>
+                                <td>`sleep (1) seconds`</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-gray-600 mt-4">**Instruções:** Conecte um resistor de 10kΩ e um LDR (sensor de luz) ao pino analógico selecionado. Execute. Varie a luz sobre o LDR e observe o valor de 0 a 4095 no Console do BIPES.</p>
+                </div>
+            </section>
+            
+            <section id="section-mod4" class="content-section">
+                <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-10">
+                    <h2 class="3xl font-bold text-gray-800 mb-6">MÓDULO 4: Comunicação Avançada (Protocolo MQTT)</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed mb-8">
+                        Para telemetria contínua e eficiente (economizando energia e dados), usamos o protocolo **MQTT**. Este protocolo é ideal para enviar pequenas mensagens de dados (como temperatura e altitude) para um servidor na nuvem.
+                    </p>
+
+                    <h3 class="2xl font-semibold text-gray-700 mb-4">Exemplo E: Publicação de Telemetria no Servidor IoT</h3>
+                    <p class="text-gray-600 mb-4">Conecte-se ao Wi-Fi (Exemplo A) e publique os dados do seu sensor (Exemplo D) em um "tópico" MQTT, simulando o envio de dados para o controle de missão.</p>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoria/Bloco</th>
+                                <th>Ação (Continuação do Exemplo D)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>**WIFI**</td>
+                                <td>`(Blocos de Conexão Wi-Fi do Exemplo A)`</td>
+                            </tr>
+                            <tr>
+                                <td>**IoT / MQTT**</td>
+                                <td>`connect MQTT (Sem senha, se for servidor publico)`</td>
+                            </tr>
+                            <tr>
+                                <td>**Loops**</td>
+                                <td>`while True:`</td>
+                            </tr>
+                            <tr>
+                                <td>**IoT / MQTT (Dentro do Loop)**</td>
+                                <td>`publish message (LUZ) to topic "satelite/telemetria"`</td>
+                            </tr>
+                            <tr>
+                                <td>**Time**</td>
+                                <td>`sleep (5) seconds`</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-gray-600 mt-4">**Instruções:** Depois de executar e conectar ao Wi-Fi, abra o Painel IoT do BIPES (ou qualquer cliente MQTT) e "assine" o tópico `satelite/telemetria`. Você verá os dados de luz chegando em tempo real! (A placa deve estar conectada à internet).</p>
+                </div>
+            </section>
+
+            <section id="section-passos" class="content-section">
+                <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-10 text-center">
+                    <h2 class="3xl font-bold text-gray-800 mb-6">6. Próximos Passos (Pronta para a Missão)</h2>
+                    <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                        Parabéns! Você dominou os principais subsistemas de controle e comunicação do ESP32. Você está pronto para construir a estrutura do seu CubeSat/CanSat.
+                    </p>
+                    <div class="info-box max-w-3xl mx-auto text-left">
+                        <h4 class="font-bold text-2xl mb-4">Desafio Final: O Sistema Completo</h4>
+                        <p class="text-lg">Combine os exemplos aprendidos:</p>
+                        <ul class="list-disc list-inside mt-4 space-y-2">
+                            <li>Conecte o ESP32 ao **Wi-Fi** (Módulo 1).</li>
+                            <li>Use um bloco **`while True`** (Módulo 2).</li>
+                            <li>Dentro do `while True`, **leia um sensor** (Módulo 3) real (ex: DHT11).</li>
+                            <li>Publique o valor da leitura no **MQTT** (Módulo 4).</li>
+                            <li>Crie uma condição **`if/else`** para piscar o LED (Módulo 2) se o valor do sensor for muito alto (Modo de Segurança).</li>
+                        </ul>
+                    </div>
+                    <p class="text-lg text-gray-600 mt-8">Este é o núcleo de um satélite funcional. Vá em frente e crie sua própria missão espacial!</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navButtons = document.querySelectorAll('.nav-button');
+            const contentSections = document.querySelectorAll('.content-section');
+            let activeSection = 'section-inicio';
+            let activeNavButton = document.querySelector('.nav-button.active');
+
+            function showSection(sectionId) {
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                const newSection = document.getElementById(sectionId);
+                    if (newSection) {
+                    newSection.classList.add('active');
+                    activeSection = sectionId;
+                }
+            }
+
+            function updateNav(clickedButton) {
+                if (activeNavButton) {
+                    activeNavButton.classList.remove('active');
+                }
+                clickedButton.classList.add('active');
+                activeNavButton = clickedButton;
+            }
+
+            navButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const targetId = e.currentTarget.dataset.target;
+                    updateNav(e.currentTarget);
+                    showSection(targetId);
+                });
+            });
+
+            function initChart() {
+                const ctx = document.getElementById('lessonChart');
+                if (!ctx) return; 
+
+                const chartInstance = new Chart(ctx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: [
+                            'Módulo 1: Wi-Fi e BLE', 
+                            'Módulo 2: Controle de LED', 
+                            'Módulo 3: Leitura de Sensores', 
+                            'Módulo 4: Comunicação Avançada'
+                        ],
+                        datasets: [{
+                            label: 'Progresso (%)',
+                            data: [25, 25, 25, 25],
+                            backgroundColor: [
+                                '#34d399', /* Emerald-400 */
+                                '#10b981', /* Emerald-500 */
+                                '#059669', /* Emerald-600 */
+                                '#047857'  /* Emerald-700 */
+                            ],
+                            borderColor: 'white',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 12
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed + '%';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Garante que o gráfico inicialize após o DOM estar pronto
+            initChart();
+            showSection(activeSection);
+            
+        });
+    </script>
+</body>
+</html>
