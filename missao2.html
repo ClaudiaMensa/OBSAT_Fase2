@@ -112,13 +112,20 @@
             <p class="text-xl text-gray-600 mt-2">Explorando o Potencial da ESP32 com Blocos BIPES</p>
         </header>
 
-        <nav class="flex overflow-x-auto justify-center gap-2 sm:gap-4 pb-4 mb-12">
-            <button class="nav-button active whitespace-nowrap" data-target="section-inicio">Início (Briefing)</button>
-            <button class="nav-button whitespace-nowrap" data-target="section-mod1">Módulo 1: Wi-Fi e BLE</button>
-            <button class="nav-button whitespace-nowrap" data-target="section-mod2">Módulo 2: Controle de LED</button>
-            <button class="nav-button whitespace-nowrap" data-target="section-mod3">Módulo 3: Leitura de Sensores</button>
-            <button class="nav-button whitespace-nowrap" data-target="section-mod4">Módulo 4: Comunicação Avançada</button>
-            <button class="nav-button whitespace-nowrap" data-target="section-passos">Próximos Passos</button>
+        <nav class="pb-4 mb-12 flex flex-col space-y-3">
+            <!-- LINHA 1: INÍCIO E PRÓXIMOS PASSOS (Fixos nas extremidades) -->
+            <div class="flex justify-between w-full">
+                <button class="nav-button active whitespace-nowrap" data-target="section-inicio">Início</button>
+                <button class="nav-button whitespace-nowrap" data-target="section-passos">Próximos Passos</button>
+            </div>
+
+            <!-- LINHA 2: MÓDULOS (Scrollable no centro) -->
+            <div class="flex overflow-x-auto justify-center gap-3">
+                <button class="nav-button whitespace-nowrap" data-target="section-mod1">Módulo 1: Wi-Fi e BLE</button>
+                <button class="nav-button whitespace-nowrap" data-target="section-mod2">Módulo 2: Controle de LED</button>
+                <button class="nav-button whitespace-nowrap" data-target="section-mod3">Módulo 3: Leitura de Sensores</button>
+                <button class="nav-button whitespace-nowrap" data-target="section-mod4">Módulo 4: Comunicação Avançada</button>
+            </div>
         </nav>
 
         <main>
@@ -204,7 +211,6 @@
                             </tr>
                             <tr>
                                 <td>**Bluetooth**</td>
-                                <td>`on message received (message)`</td>
                             </tr>
                             <tr>
                                 <td>**Logic (Dentro do on message)**</td>
@@ -298,7 +304,6 @@
                             </tr>
                             <tr>
                                 <td>**Loops**</td>
-                                <td>`while True:`</td>
                             </tr>
                             <tr>
                                 <td>**Hardware (Dentro do Loop)**</td>
@@ -390,7 +395,12 @@
             const navButtons = document.querySelectorAll('.nav-button');
             const contentSections = document.querySelectorAll('.content-section');
             let activeSection = 'section-inicio';
-            let activeNavButton = document.querySelector('.nav-button.active');
+            let activeNavButton = document.querySelector('.nav-button[data-target="section-inicio"]'); // Seleciona o botão Início
+
+            // Aplica a classe active no botão de início
+            if (activeNavButton) {
+                activeNavButton.classList.add('active');
+            }
 
             function showSection(sectionId) {
                 contentSections.forEach(section => {
