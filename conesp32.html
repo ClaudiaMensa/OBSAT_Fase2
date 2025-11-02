@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula Interativa: Problemas de Acesso ao ESP32</title>
+    <!-- Carregamento do Tailwind CSS para estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Define a fonte Inter como padrão */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+        /* Estilo para o cabeçalho do acordeão */
+        summary {
+            cursor: pointer;
+            padding: 1.25rem 1.5rem;
+            border-radius: 0.5rem;
+            background-color: #ffffff;
+            font-weight: 600;
+            color: #1f2937;
+            transition: background-color 0.2s ease-in-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        summary:hover {
+            background-color: #f3f4f6;
+        }
+
+        /* Estilo para o conteúdo do acordeão */
+        .content {
+            padding: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            background-color: #ffffff;
+            border-radius: 0 0 0.5rem 0.5rem;
+        }
+
+        /* Estilo para a seta (quando aberto) */
+        details[open] summary .arrow {
+            transform: rotate(90deg);
+        }
+
+        .arrow {
+            transition: transform 0.2s ease-in-out;
+            font-size: 1.25rem;
+        }
+
+        /* Estilo de Destaque para Dicas */
+        .tip-box {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            border-radius: 0.25rem;
+            margin-top: 1rem;
+        }
+        
+        /* Container para o vídeo responsivo */
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+            background: #000;
+            border-radius: 0.5rem;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script>
+        // Adiciona funcionalidade para garantir que apenas um acordeão esteja aberto por vez
+        document.addEventListener('DOMContentLoaded', () => {
+            const detailsElements = document.querySelectorAll('details');
+            detailsElements.forEach(details => {
+                details.addEventListener('toggle', (event) => {
+                    if (details.open) {
+                        detailsElements.forEach(otherDetails => {
+                            if (otherDetails !== details && otherDetails.open) {
+                                otherDetails.open = false;
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body class="bg-gray-50 p-6">
+    <div class="container bg-white shadow-xl rounded-lg p-6 md:p-10">
+        <header class="mb-8 border-b pb-4">
+            <h1 class="text-4xl font-extrabold text-blue-600">🛠️ Guia de Solução de Problemas do ESP32</h1>
+            <p class="mt-2 text-xl text-gray-600">Possibilidades para o computador não reconhecer a placa ESP32</p>
+        </header>
+
+        <section id="troubleshooting-accordions" class="space-y-4">
+            
+            <!-- CATEGORIA 1: PROBLEMAS DE HARDWARE E CONEXÃO FÍSICA -->
+            <details class="shadow-md rounded-lg overflow-hidden border border-gray-200">
+                <summary class="text-red-700 hover:bg-red-50">
+                    <span>1. O Elo Mais Fraco: Cabo e Conexão USB</span>
+                    <span class="arrow text-gray-400">►</span>
+                </summary>
+                <div class="content">
+                    <h2 class="text-2xl font-semibold mb-3 text-red-600">Causas Físicas Comuns</h2>
+                    <ul class="list-disc ml-5 space-y-3 text-gray-700">
+                        <li>
+                            <strong class="font-medium">Cabo USB Defeituoso:</strong> A causa mais comum! Muitos cabos USB (principalmente os de carregamento) são apenas para energia e não transmitem dados.
+                            <div class="tip-box">
+                                <p class="font-bold">Solução:</p>
+                                <p>Tente usar um cabo USB novo e de alta qualidade que você saiba que suporta transferência de dados (geralmente cabos mais curtos são mais confiáveis).</p>
+                            </div>
+                        </li>
+                        <li>
+                            <strong class="font-medium">Porta USB do Computador:</strong> A porta pode estar desativada, com problemas elétricos ou ser um hub USB fraco.
+                            <div class="tip-box">
+                                <p class="font-bold">Solução:</p>
+                                <p>Troque a porta USB. Se estiver em um desktop, use uma porta traseira (direta da placa-mãe). Evite hubs USB não alimentados, se possível.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <strong class="font-medium">Placa Desligada ou Solta:</strong> A conexão entre o cabo e o conector micro-USB da placa pode estar frouxa.
+                            <div class="tip-box">
+                                <p class="font-bold">Solução:</p>
+                                <p>Reconecte o cabo firmemente. Verifique se o LED de energia (PWR) na placa ESP32 acende quando conectado.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </details>
+
+            <!-- CATEGORIA 2: PROBLEMAS DE DRIVERS (O Sistema Não Vê) -->
+            <details class="shadow-md rounded-lg overflow-hidden border border-gray-200 mt-4">
+                <summary class="text-yellow-700 hover:bg-yellow-50">
+                    <span>2. Ausência ou Erro de Drivers Seriais (VCP)</span>
+                    <span class="arrow text-gray-400">►</span>
+                </summary>
+                <div class="content">
+                    <h2 class="text-2xl font-semibold mb-3 text-yellow-600">O Corretor de Protocolo</h2>
+                    <p class="mb-4 text-gray-700">O computador precisa de um driver específico para "entender" o chip conversor USB-Serial da sua placa ESP32.</p>
+                    <ul class="list-disc ml-5 space-y-3 text-gray-700">
+                        <li>
+                            <strong class="font-medium">Chip CP210x (Silicon Labs):</strong> Comum em placas ESP32 genuínas e em algumas clones.
+                            <div class="tip-box bg-yellow-100 border-yellow-500">
+                                <p class="font-bold">Solução:</p>
+                                <p>Instale o driver oficial da Silicon Labs (CP210x VCP Drivers). Reinicie o computador após a instalação.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <strong class="font-medium">Chip CH340/CH341G (WCH):</strong> Extremamente comum em placas clones mais baratas.
+                            <div class="tip-box bg-yellow-100 border-yellow-500">
+                                <p class="font-bold">Solução:</p>
+                                <p>Instale o driver oficial CH340/CH341G. Reinicie após a instalação.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <strong class="font-medium">Driver Não Assinado (Windows):</strong> Em alguns Windows mais antigos, pode haver bloqueio de drivers não assinados.
+                            <div class="tip-box bg-yellow-100 border-yellow-500">
+                                <p class="font-bold">Diagnóstico:</p>
+                                <p>Abra o Gerenciador de Dispositivos (Windows) ou digite <code>ls /dev/tty.*</code> no Terminal (macOS/Linux) para ver se a porta aparece. Se não aparecer, o driver é a falha.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </details>
+
+            <!-- CATEGORIA 3: PROBLEMAS DE SOFTWARE E IDE (O Computador Vê, Mas Não Se Comunica) -->
+            <details class="shadow-md rounded-lg overflow-hidden border border-gray-200 mt-4">
+                <summary class="text-blue-700 hover:bg-blue-50">
+                    <span>3. Configuração Incorreta da IDE (Arduino, VS Code, etc.)</span>
+                    <span class="arrow text-gray-400">►</span>
+                </summary>
+                <div class="content">
+                    <h2 class="text-2xl font-semibold mb-3 text-blue-600">Ajustes Finos no Ambiente</h2>
+                    <ul class="list-disc ml-5 space-y-3 text-gray-700">
+                        <li>
+                            <strong class="font-medium">Porta Serial Errada Selecionada:</strong> Você pode ter selecionado outra porta serial (ex: COM1) que não é a do seu ESP32.
+                            <div class="tip-box bg-blue-100 border-blue-500">
+                                <p class="font-bold">Solução:</p>
+                                <p>Verifique o Gerenciador de Dispositivos ou o Terminal para identificar o nome exato da porta serial (ex: COMx no Windows, /dev/tty.SLAB_USBtoUART no Mac) e selecione-a na IDE.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <strong class="font-medium">Placa ESP32 Errada Selecionada:</strong> Embora menos crítico para a conexão, selecionar o modelo de placa errado pode causar erros de compilação ou falhas de upload.
+                            <div class="tip-box bg-blue-100 border-blue-500">
+                                <p class="font-bold">Solução:</p>
+                                <p>Certifique-se de que o modelo da sua placa (ex: "ESP32 Dev Module" ou "Lolin D32") está selecionado corretamente no menu "Ferramentas > Placa".</p>
+                            </div>
+                        </li>
+                        <li>
+                            <strong class="font-medium">Baud Rate Incorreto:</strong> A velocidade de comunicação serial pode estar incorreta, causando caracteres estranhos no monitor serial ou falha de upload.
+                            <div class="tip-box bg-blue-100 border-blue-500">
+                                <p class="font-bold">Solução:</p>
+                                <p>Para upload, geralmente 115200 ou 460800 é o padrão. Para o Monitor Serial, deve corresponder ao valor definido no seu código (ex: <code>Serial.begin(9600);</code>).</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </details>
+
+            <!-- CATEGORIA 4: PROBLEMAS DE BOOTLOADER E MODO FLASH -->
+            <details class="shadow-md rounded-lg overflow-hidden border border-gray-200 mt-4">
+                <summary class="text-purple-700 hover:bg-purple-50">
+                    <span>4. Falha ao Entrar no Modo de Programação (O Bootloader)</span>
+                    <span class="arrow text-gray-400">►</span>
+                </summary>
+                <div class="content">
+                    <h2 class="text-2xl font-semibold mb-3 text-purple-600">A Dança dos Botões</h2>
+                    <p class="mb-4 text-gray-700">Se o driver estiver OK e a porta selecionada, mas o upload falhar com erros como <code>A fatal error occurred: Failed to connect to ESP32: Timed out waiting for packet header</code>, a placa não entrou no modo de gravação.</p>
+                    <ul class="list-disc ml-5 space-y-3 text-gray-700">
+                        <li>
+                            <strong class="font-medium">Sequência de Boot Manual Necessária:</strong> Placas mais antigas ou certas arquiteturas podem exigir que você force o modo de gravação.
+                            <div class="tip-box bg-purple-100 border-purple-500">
+                                <p class="font-bold">Solução Manual (Crítica):</p>
+                                <ol class="list-decimal ml-5 mt-2">
+                                    <li>Mantenha o botão <strong class="text-red-600">BOOT (IO0)</strong> pressionado.</li>
+                                    <li>Pressione e solte o botão <strong class="text-green-600">RESET (EN)</strong>.</li>
+                                    <li>Solte o botão <strong class="text-red-600">BOOT (IO0)</strong>.</li>
+                                    <li>Tente fazer o upload do código *imediatamente* após a sequência.</li>
+                                </ol>
+                                <p class="mt-2">Muitas placas modernas fazem isso automaticamente, mas se falhar, a intervenção manual é obrigatória.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <strong class="font-medium">Problemas de Energia:</strong> A energia fornecida pela porta USB pode não ser suficiente durante o processo de gravação, o que pode interromper a conexão.
+                            <div class="tip-box bg-purple-100 border-purple-500">
+                                <p class="font-bold">Solução:</p>
+                                <p>Tente usar um cabo Y USB ou um hub USB alimentado para garantir energia suficiente, especialmente se estiver usando muitos periféricos ou LEDs.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </details>
+
+            <!-- CATEGORIA 5: PROBLEMAS DE PERMISSÕES E SISTEMA OPERACIONAL -->
+            <details class="shadow-md rounded-lg overflow-hidden border border-gray-200 mt-4">
+                <summary class="text-green-700 hover:bg-green-50">
+                    <span>5. Barreiras do Sistema Operacional (SO)</span>
+                    <span class="arrow text-gray-400">►</span>
+                </summary>
+                <div class="content">
+                    <h2 class="text-2xl font-semibold mb-3 text-green-600">Acesso Negado</h2>
+                    <ul class="list-disc ml-5 space-y-3 text-gray-700">
+                        <li>
+                            <strong class="font-medium">Permissões no Linux:</strong> Por padrão, usuários comuns no Linux não têm permissão para acessar dispositivos seriais.
+                            <div class="tip-box bg-green-100 border-green-500">
+                                <p class="font-bold">Solução (Linux):</p>
+                                <p>Adicione seu usuário ao grupo <code>dialout</code> ou <code>uucp</code> usando o comando:</p>
+                                <code class="block bg-gray-200 p-2 rounded mt-1">sudo usermod -a -G dialout $USER</code>
+                                <p class="mt-2">Você precisará sair da sessão e logar novamente para que a mudança tenha efeito.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <strong class="font-medium">Bloqueio de Antivírus/Firewall (Windows):</strong> Alguns softwares de segurança podem interferir na comunicação de baixo nível da porta serial.
+                            <div class="tip-box bg-green-100 border-green-500">
+                                <p class="font-bold">Solução (Windows):</p>
+                                <p>Tente desativar temporariamente o antivírus ou adicionar o executável da sua IDE (ex: <code>arduino.exe</code>) como uma exceção no Firewall.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </details>
+            
+            <!-- CATEGORIA 6: RECURSO EM VÍDEO -->
+            <details class="shadow-md rounded-lg overflow-hidden border border-gray-200 mt-4">
+                <summary class="text-indigo-700 hover:bg-indigo-50">
+                    <span>6. 🎥 Aula em Vídeo: Como Instalar o Driver (Conteúdo Externo)</span>
+                    <span class="arrow text-gray-400">►</span>
+                </summary>
+                <div class="content">
+                    <h2 class="text-2xl font-semibold mb-3 text-indigo-600">COMPUTADOR NÃO RECONHECE A ESP32? Como resolver</h2>
+                    <p class="mb-4 text-gray-700">Este vídeo, do canal <strong class="font-medium">EngEasier | Automação com Arduino e ESP32</strong>, oferece uma visão prática, detalhando as duas causas mais comuns para a falha de reconhecimento da placa: drivers e cabos.</p>
+                    
+                    <!-- Vídeo Embed -->
+                    <div class="video-container mb-4">
+                        <iframe 
+                            src="https://www.youtube.com/embed/Amtw8nU0cfg" 
+                            title="COMPUTADOR NÃO RECONHECE A ESP32? Como resolver"
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+
+                    <h3 class="text-xl font-semibold mb-2 text-indigo-700">Pontos Chave do Vídeo (Dica do Professor):</h3>
+                    <ul class="list-disc ml-5 space-y-2 text-gray-700">
+                        <li>
+                            <strong class="font-medium">Prioridade: Drivers.</strong> O vídeo reforça que a falta do driver (CP210x ou CH340) é a causa mais frequente e ensina como localizá-los e instalá-los. (Conforme mencionado em [00:01:37]).
+                        </li>
+                        <li>
+                            <strong class="font-medium">Cabos Apenas de Energia.</strong> O segundo ponto mais importante é verificar se o cabo USB que você está usando suporta a transmissão de dados. Cabos de carregamento de celular geralmente só fornecem alimentação e devem ser substituídos. (Conforme mencionado em [00:04:39]).
+                        </li>
+                        <li>
+                            <strong class="font-medium">Verificação de Chip.</strong> Para placas não padrão, é essencial verificar o modelo do chip USB-Serial na própria placa e pesquisar o driver correspondente (Conforme mencionado em [00:05:30]).
+                        </li>
+                    </ul>
+                </div>
+            </details>
+
+        </section>
+
+        <footer class="mt-10 pt-4 border-t text-center text-gray-500">
+            <p class="text-lg font-medium">✨ Dica Final: O Ciclo de Debug</p>
+            <p class="text-sm mt-1">Sempre comece pelo mais simples (Cabo) e avance metodicamente para o mais complexo (Configuração de Bootloader). A paciência é a melhor ferramenta do programador embarcado!</p>
+        </footer>
+    </div>
+
+    <!-- Script para garantir que a fonte Inter seja carregada, embora o Tailwind já a sugira -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+</body>
+</html>
