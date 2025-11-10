@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Interativo OBSAT - Fase 2: Programação e Testes</title>
+    <!-- Carregamento do Tailwind CSS CDN para estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+            scroll-behavior: smooth;
+        }
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        .menu-link {
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+        .menu-link:hover {
+            background-color: #e0f2f1;
+            border-left-color: #00796b;
+        }
+        .menu-link.active {
+            background-color: #e0f2f1;
+            border-left-color: #00796b;
+            font-weight: 600;
+            color: #00796b;
+        }
+        /* Estilos para a barra de progresso do vídeo */
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+            margin-top: 1.5rem;
+            border-radius: 0.5rem;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="min-h-screen flex flex-col md:flex-row">
+        <!-- Sidebar (Menu Lateral) -->
+        <aside id="sidebar" class="sidebar bg-white p-6 shadow-xl md:shadow-md md:w-64 fixed md:sticky top-0 h-16 md:h-screen z-20 w-full md:flex-shrink-0 transform -translate-x-full md:translate-x-0">
+            <!-- Título do Menu para Mobile -->
+            <div class="flex justify-between items-center mb-4 md:mb-8 h-full md:h-auto">
+                <h2 class="text-xl font-bold text-gray-800 hidden md:block">Guia da Fase 2</h2>
+                <button id="menu-toggle" class="md:hidden p-2 rounded-lg bg-gray-100 text-gray-700">
+                    <!-- Icone de Fechar (escondido inicialmente) -->
+                    <svg id="close-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <!-- Icone de Menu (visível inicialmente) -->
+                    <svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </div>
+
+            <!-- Links do Menu (Inicialmente escondidos no mobile) -->
+            <nav id="menu-links" class="flex flex-col space-y-2 pt-4 md:pt-0 hidden md:flex">
+                <a href="#requisitos" class="menu-link p-3 rounded-lg text-sm text-gray-700">1. Requisitos Fundamentais (Revisão)</a>
+                <a href="#programacao" class="menu-link p-3 rounded-lg text-sm text-gray-700">2. Programação com BIPES</a>
+                <a href="#sensores" class="menu-link p-3 rounded-lg text-sm text-gray-700 ml-4 border-none">2.1. Leitura dos Sensores</a>
+                <a href="#json" class="menu-link p-3 rounded-lg text-sm text-gray-700 ml-4 border-none">2.2. JSON e Lógica de Envio</a>
+                <a href="#testes" class="menu-link p-3 rounded-lg text-sm text-gray-700">3. Estratégias de Testes de Robustez</a>
+                <a href="#mecanica" class="menu-link p-3 rounded-lg text-sm text-gray-700 ml-4 border-none">3.1. Robustez Mecânica</a>
+                <a href="#eletronica" class="menu-link p-3 rounded-lg text-sm text-gray-700 ml-4 border-none">3.2. Robustez Eletrônica e Magnética</a>
+                <a href="#termica" class="menu-link p-3 rounded-lg text-sm text-gray-700 ml-4 border-none">3.3. Robustez Térmica (Simulação)</a>
+                <a href="#transmissao" class="menu-link p-3 rounded-lg text-sm text-gray-700 ml-4 border-none">3.4. Teste de Transmissão de Dados</a>
+            </nav>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <main class="flex-1 p-6 md:p-10">
+            <header class="bg-white p-6 md:p-8 rounded-xl shadow-lg mb-8">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-[#00796b] mb-2">Construa e Comprove: Guia da Fase 2 OBSAT</h1>
+                <p class="text-lg text-gray-600">Foco na Programação do ESP32 (BIPES) e Testes de Robustez para a Missão Estratosférica.</p>
+            </header>
+
+            <section id="requisitos" class="bg-white p-6 md:p-8 rounded-xl shadow-lg mb-8">
+                <h2 class="text-2xl font-bold text-gray-700 mb-6 border-b pb-2">1. Requisitos Fundamentais da Fase 2 (Revisão)</h2>
+                <p class="mb-4 text-gray-600">A sua programação e os seus testes devem validar que o SmallSat está pronto para as condições de altitude de até 40 km e para a submissão obrigatória.</p>
+                
+                <!-- NOVO DESTAQUE: ENTREGÁVEIS E PRAZO -->
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded-lg mb-6">
+                    <p class="font-bold mb-1">📢 ENTREGÁVEIS OBRIGATÓRIOS E PRAZO</p>
+                    <p class="text-sm">Os principais entregáveis para a submissão da Fase 2 são o **Documento Técnico (PDF)** e o **Vídeo Descrevendo o Protótipo**. O prazo final para estas entregas é **15 de dezembro**.</p>
+                </div>
+                <!-- FIM DO NOVO DESTAQUE -->
+
+                <div class="overflow-x-auto mb-6">
+                    <table class="min-w-full bg-gray-50 rounded-lg overflow-hidden text-sm">
+                        <thead>
+                            <tr class="bg-gray-200 text-gray-700 uppercase tracking-wider">
+                                <th class="py-3 px-4 text-left">Requisito</th>
+                                <th class="py-3 px-4 text-left">Detalhe Técnico</th>
+                                <th class="py-3 px-4 text-left">Alvo da Programação/Teste</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr>
+                                <td class="py-3 px-4 font-semibold">Sensores</td>
+                                <td class="py-3 px-4">Pressão, Temperatura, Nível da Bateria, Acelerômetro e Giroscópio (3 eixos).</td>
+                                <td class="py-3 px-4">Leitura e calibração de todos os sensores.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-semibold">Comunicação</td>
+                                <td class="py-3 px-4">HTTP POST (JSON) para `http://192.168.0.1/`.</td>
+                                <td class="py-3 px-4">Criação da string JSON e envio via Wi-Fi.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-semibold">Intervalo</td>
+                                <td class="py-3 px-4">Envio de dados a cada **4 minutos**, por no mínimo **40 minutos**.</td>
+                                <td class="py-3 px-4">Implementação de temporizador no loop principal (240.000 ms).</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-semibold">Mecânica</td>
+                                <td class="py-3 px-4">Montagem estável, robusta e isolamento térmico da bateria.</td>
+                                <td class="py-3 px-4">Comprovação via testes e documentação (fotos e desenhos).</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="programacao" class="bg-white p-6 md:p-8 rounded-xl shadow-lg mb-8">
+                <h2 class="text-2xl font-bold text-gray-700 mb-6 border-b pb-2">2. 💻 Programação do ESP32 com BIPES</h2>
+                <p class="mb-6 text-gray-600">O BIPES (Block Based Integrated Platform for Embedded Systems) simplifica a complexidade da comunicação, permitindo que a equipe foque na lógica da missão.</p>
+
+                <h3 id="sensores" class="text-xl font-semibold text-gray-700 mb-4 pt-2">2.1. Etapa 1: Leitura e Integração dos Sensores Obrigatórios (I2C)</h3>
+                <p class="mb-4">Para economizar pinos e simplificar as conexões, utilize o barramento I2C, que permite conectar o BMP280 e o MPU6050 aos mesmos dois pinos do ESP32 (SDA e SCL).</p>
+                
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-inner">
+                        <h4 class="font-bold text-lg text-[#00796b] mb-2">Dados Atmosféricos (BMP280)</h4>
+                        <p class="text-sm mb-3">O BMP280 fornece Pressão e Temperatura. Sua leitura de pressão é usada para calcular a Altitude (dado chave para a missão).</p>
+                        <ul class="list-disc list-inside text-sm text-gray-600 mb-3">
+                            <li>**Comunicação:** I2C (SDA -> GPIO 21; SCL -> GPIO 22).</li>
+                            <li>**No BIPES:** Use blocos na seção I2C para inicializar o sensor.</li>
+                        </ul>
+                        <div class="video-container">
+                            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/H42OY60SA8o" title="BMP280 no ESP32 para medir pressão, temperatura e altitude" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                        </div>
+                        <p class="text-xs mt-2 italic text-gray-500 text-center">Vídeo: BMP280 no ESP32 para medir pressão, temperatura e altitude</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-inner">
+                        <h4 class="font-bold text-lg text-[#00796b] mb-2">Dados Inerciais (MPU6050)</h4>
+                        <p class="text-sm mb-3">O MPU6050 fornece os valores de **Acelerômetro** e **Giroscópio** (eixos X, Y, Z), cruciais para monitorar a atitude e vibração durante o voo.</p>
+                        <ul class="list-disc list-inside text-sm text-gray-600 mb-3">
+                            <li>**Comunicação:** I2C (Compartilha os mesmos pinos SDA/SCL que o BMP280).</li>
+                            <li>**No BIPES:** Use blocos específicos para MPU6050 (ou MPU9250).</li>
+                        </ul>
+                        <div class="video-container">
+                             <iframe width="100%" height="100%" src="https://www.youtube.com/embed/S3078E0p104" title="Como usar o MPU6050 com ESP32 - Acelerômetro e Giroscópio" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                        </div>
+                        <p class="text-xs mt-2 italic text-gray-500 text-center">Vídeo: Como usar o MPU6050 com ESP32 - Acelerômetro e Giroscópio</p>
+                    </div>
+                </div>
+
+                <h3 id="json" class="text-xl font-semibold text-gray-700 mb-4 pt-2">2.2. Etapa 2: Formatação JSON e Lógica de Envio</h3>
+                <p class="mb-4">O código no BIPES deve garantir que a telemetria é enviada no formato exigido, no intervalo correto e para o endereço da sonda de voo.</p>
+
+                <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-lg mb-6">
+                    <p class="font-bold">Estrutura JSON Obrigatória</p>
+                    <p class="text-sm">Certifique-se de que os nomes dos campos (`equipe`, `bateria`, `temperatura`, `pressao`, `giroscopio`, `acelerometro`, `payload`) sejam EXATAMENTE estes.</p>
+                </div>
+
+                <div class="bg-gray-800 p-4 rounded-lg text-xs font-mono text-gray-200 overflow-x-auto mb-6">
+                    <pre><code>{
+"equipe": "ID_DA_SUA_EQUIPE",
+"bateria": VALOR_ADC_BATERIA,
+"temperatura": VALOR_BMP280_TEMP,
+"pressao": VALOR_BMP280_PRESSAO,
+"giroscopio": [GX, GY, GZ], // MPU6050
+"acelerometro": [AX, AY, AZ], // MPU6050
+"payload": {
+    "dado_missao": DADO_DA_SUA_MISSÃO,
+    "status": "OK"
+}
+}</code></pre>
+                </div>
+                
+                <p class="mb-2 font-semibold">Lógica de Programação (Fluxo no BIPES):</p>
+                <ul class="list-decimal list-inside text-gray-600 mb-6 space-y-1 text-sm bg-yellow-50 p-4 rounded-lg">
+                    <li>**Inicialização:** Conectar o ESP32 à rede Wi-Fi `OBSAT_WIFI` e senha `OBSatZenith1000` (para testes, use a sua rede).</li>
+                    <li>**Loop de 4 Minutos:** Blocos de repetição contínua com um bloco de **Delay de 240.000 ms** no final.</li>
+                    <li>**Montagem do Objeto:** Criar o objeto JSON, inserindo todas as variáveis lidas na Etapa 1.</li>
+                    <li>**Transmissão:** Bloco HTTP/Rede com o método **POST** e URL `http://192.168.0.1/`.</li>
+                </ul>
+
+            </section>
+
+            <section id="testes" class="bg-white p-6 md:p-8 rounded-xl shadow-lg mb-8">
+                <h2 class="text-2xl font-bold text-gray-700 mb-6 border-b pb-2">3. 🛡️ Estratégias de Testes de Robustez e Confiabilidade</h2>
+                <p class="mb-4 text-gray-600">O Relatório de Testes é sua prova de que o satélite sobreviverá ao lançamento. Os testes devem ser documentados com resultados, fotos/vídeos e análises.</p>
+
+                <h3 id="mecanica" class="text-xl font-semibold text-gray-700 mb-4 pt-2">3.1. Robustez Mecânica</h3>
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg mb-4">
+                    <p class="font-bold text-green-800">Objetivo:</p>
+                    <p class="text-sm text-green-700">Comprovar que a estrutura, parafusos e conexões resistem a vibrações e pequenos choques.</p>
+                </div>
+                <ul class="list-disc list-inside text-gray-600 mb-6 ml-4">
+                    <li>**Teste de Vibração:** Prenda o protótipo em uma superfície vibratória (ex: parte lateral de um ventilador ou máquina de lavar) e monitore a telemetria do MPU6050 (Acelerômetro) para detectar falhas ou interrupções no envio de dados.</li>
+                    <li>**Teste de Choque:** Deixe o satélite cair suavemente (aprox. 30 cm) sobre um tapete (simulando um impacto menor) e verifique se as soldas e componentes não se soltam.</li>
+                </ul>
+                
+                <h3 id="eletronica" class="text-xl font-semibold text-gray-700 mb-4 pt-2">3.2. Robustez Eletrônica e Magnética</h3>
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg mb-4">
+                    <p class="font-bold text-green-800">Objetivo:</p>
+                    <p class="text-sm text-green-700">Garantir que o sistema de energia é estável e que a leitura dos sensores inerciais não é facilmente corrompida.</p>
+                </div>
+                <ul class="list-disc list-inside text-gray-600 mb-6 ml-4">
+                    <li>**Estresse de Tensão:** Deixe o satélite ligado, transmitindo continuamente, e monitore o consumo. Registre quanto tempo ele opera e se a estabilidade do ESP32 é mantida à medida que a bateria se esgota.</li>
+                    <li>**Interferência Magnética:** Aproxime um ímã do MPU6050 (Giroscópio/Acelerômetro) enquanto monitora seus dados. O objetivo não é evitar a leitura errada durante o contato, mas sim provar que os sensores **retornam à leitura normal** após a remoção da interferência.</li>
+                </ul>
+
+                <h3 id="termica" class="text-xl font-semibold text-gray-700 mb-4 pt-2">3.3. Robustez Térmica (Simulação)</h3>
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg mb-4">
+                    <p class="font-bold text-green-800">Objetivo:</p>
+                    <p class="text-sm text-green-700">Comprovar a eficácia do isolamento térmico na proteção dos componentes em baixas temperaturas.</p>
+                </div>
+                <ul class="list-disc list-inside text-gray-600 mb-6 ml-4">
+                    <li>**Teste de Congelamento:** Enrole o satélite com o seu material de isolamento (Depron/EPE). Coloque-o no congelador (freezer) junto com um termômetro externo (de cozinha, por exemplo) para saber a temperatura da câmara.</li>
+                    <li>Monitore a **temperatura interna** (lida pelo BMP280, que deve estar exposto) e a **transmissão de dados**. O satélite deve continuar transmitindo mesmo em condições de frio extremo (simuladas) por um tempo prolongado (ex: 30 minutos).</li>
+                </ul>
+                
+                <h3 id="transmissao" class="text-xl font-semibold text-gray-700 mb-4 pt-2">3.4. Teste de Captura e Transmissão de Dados</h3>
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg mb-4">
+                    <p class="font-bold text-green-800">Objetivo:</p>
+                    <p class="text-sm text-green-700">Comprovar o funcionamento completo do loop de telemetria.</p>
+                </div>
+                <ul class="list-disc list-inside text-gray-600 mb-6 ml-4">
+                    <li>**Teste de Loop Temporal:** Use um cronômetro e o Serial Monitor (ou um servidor HTTP simulado) para confirmar que as transmissões ocorrem a cada **240 segundos** (4 minutos) e que o loop de 40 minutos (10 envios) pode ser completado.</li>
+                    <li>**Validação do JSON:** Verifique no servidor de teste se o pacote JSON recebido está estruturado corretamente e se os valores dos sensores (movimentando o satélite e alterando a pressão/temperatura) são lidos e transmitidos com precisão.</li>
+                </ul>
+            </section>
+
+            <footer class="text-center text-sm text-gray-500 pt-8 pb-4">
+                <p>Guia interativo da Fase 2 da OBSAT, focado na programação com ESP32/BIPES e testes de robustez.</p>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const menuToggle = document.getElementById('menu-toggle');
+            const menuLinks = document.getElementById('menu-links');
+            const menuIcon = document.getElementById('menu-icon');
+            const closeIcon = document.getElementById('close-icon');
+            const navLinks = document.querySelectorAll('#menu-links a');
+
+            // 1. Toggle do Menu Lateral para Mobile
+            menuToggle.addEventListener('click', () => {
+                const isHidden = menuLinks.classList.contains('hidden');
+                
+                if (isHidden) {
+                    // Abrir Menu
+                    menuLinks.classList.remove('hidden');
+                    menuIcon.classList.add('hidden');
+                    closeIcon.classList.remove('hidden');
+                    // Mostrar a sidebar no mobile
+                    sidebar.classList.remove('-translate-x-full');
+                    sidebar.classList.add('h-screen', 'shadow-2xl');
+                } else {
+                    // Fechar Menu
+                    menuLinks.classList.add('hidden');
+                    menuIcon.classList.remove('hidden');
+                    closeIcon.classList.add('hidden');
+                    // Esconder a sidebar no mobile
+                    sidebar.classList.add('-translate-x-full');
+                    sidebar.classList.remove('h-screen', 'shadow-2xl');
+                }
+            });
+
+            // Fechar o menu ao clicar em um link no mobile
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 768) {
+                        menuLinks.classList.add('hidden');
+                        menuIcon.classList.remove('hidden');
+                        closeIcon.classList.add('hidden');
+                        sidebar.classList.add('-translate-x-full');
+                        sidebar.classList.remove('h-screen', 'shadow-2xl');
+                    }
+                });
+            });
+
+            // 2. Atualizar o Link Ativo no Menu (Baseado na Posição de Scroll)
+            const sections = document.querySelectorAll('section[id]');
+
+            const updateActiveLink = () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - 100; // Offset para melhor visualização
+                    if (scrollY >= sectionTop) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.href.includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            };
+
+            window.addEventListener('scroll', updateActiveLink);
+            updateActiveLink(); // Chamar na carga inicial
+        });
+    </script>
+</body>
+</html>
