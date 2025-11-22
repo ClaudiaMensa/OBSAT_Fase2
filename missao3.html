@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula Interativa: Programação de Sensores com ESP32 e BIPES</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and smooth transitions */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+        }
+        .step-content {
+            transition: all 0.5s ease-in-out;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .active-step {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .sensor-card {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .sensor-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .active-sensor {
+            border-left: 5px solid #10b981; /* Emerald green accent */
+            background-color: #ecfdf5;
+        }
+        .bipes-block {
+            background-color: #e0f2fe; /* Light blue background for blocks */
+            color: #0369a1; /* Darker blue text */
+            font-weight: 600;
+            padding: 4px 8px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            display: inline-block;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+            font-size: 0.8rem;
+        }
+        .bipes-container {
+            border: 2px dashed #9ca3af;
+            background-color: #f9fafb;
+            padding: 8px;
+            min-height: 10rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-4xl mx-auto bg-white shadow-2xl rounded-xl p-6 sm:p-10">
+
+        <header class="text-center mb-10">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-2">
+                Curso: Sensores de Satélite com ESP32 e BIPES
+            </h1>
+            <p class="text-lg text-gray-500">
+                Guia interativo para identificar pinos e programar LDR, DHT11, BMP280, MPU6050 e BMY271.
+            </p>
+        </header>
+
+        <!-- Main Content Area -->
+        <div id="lesson-content">
+            <!-- Content will be rendered here by JavaScript -->
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between mt-10 pt-6 border-t border-gray-100">
+            <button id="prev-btn" onclick="prevStep()" class="px-6 py-3 bg-gray-300 text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-400 transition-colors disabled:opacity-50" disabled>
+                &larr; Anterior
+            </button>
+            <button id="next-btn" onclick="nextStep()" class="px-6 py-3 bg-emerald-500 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-600 transition-colors">
+                Próximo &rarr;
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Variáveis de Estado ---
+        let step = 0;
+        let currentSensor = 'LDR';
+        const totalSteps = 5; // 0 a 5 (Novo passo final adicionado)
+
+        // --- Dados dos Sensores ---
+        const sensorsData = {
+            'LDR': {
+                name: 'LDR (Sensor de Luminosidade)',
+                type: 'Analógico',
+                pin_concept: 'Conectado a um pino ADC (Analog-to-Digital Converter).',
+                pin_example: 'GPIO 34 (ADC1_CH6). Evite GPIOs 25, 26, 27 por serem ADC2, potencialmente usados pelo WiFi.',
+                bipes_logic: "O BIPES tem um bloco 'Leitura Analógica' que retorna um valor (0 a 4095) diretamente para esse pino.",
+                bipes_blocks: `
+                    <span class="bipes-block bg-pink-300 text-pink-900">LOOP INFINITO (while True)</span>
+                    <div class="ml-4 flex flex-col">
+                        <span class="bipes-block">VARIÁVEL 'luz' = Leitura Analógica (PIN: 34)</span>
+                        <span class="bipes-block bg-orange-300 text-orange-900">Imprimir (Juntar Texto 'Luminosidade: ' + 'luz')</span>
+                        <span class="bipes-block bg-gray-300 text-gray-900">Esperar (1) segundos</span>
+                    </div>
+                `,
+                python_code: `# Python no BIPES (MicroPython)
+from machine import Pin, ADC
+import time
+
+# Configura o pino ADC (exemplo GPIO 34)
+adc = ADC(Pin(34))
+adc.atten(ADC.ATTN_11DB) # Configura faixa de 0 a 3.3V
+
+while True:
+    valor_luz = adc.read() # Lê o valor entre 0 e 4095
+    print(f"Luminosidade: {valor_luz}")
+    time.sleep(1)
+                `
+            },
+            'DHT11': {
+                name: 'DHT11 (Temp. e Umidade)',
+                type: 'Digital (OneWire)',
+                pin_concept: 'Usa apenas um pino digital para comunicação. Requer uma biblioteca específica.',
+                pin_example: 'GPIO 4. É um pino digital seguro (sem funções de boot críticas).',
+                bipes_logic: "O BIPES possui blocos dedicados na seção 'Sensores' para 'DHT' onde você especifica o pino e escolhe se quer a Temperatura ou a Umidade.",
+                bipes_blocks: `
+                    <span class="bipes-block bg-yellow-300 text-yellow-900">Inicializar DHT11 (Pino: 4) como 'dht'</span>
+                    <span class="bipes-block bg-pink-300 text-pink-900">LOOP INFINITO (while True)</span>
+                    <div class="ml-4 flex flex-col">
+                        <span class="bipes-block">Chamar 'dht.measure()'</span>
+                        <span class="bipes-block">VARIÁVEL 'temp' = dht.temperature()</span>
+                        <span class="bipes-block">VARIÁVEL 'umid' = dht.humidity()</span>
+                        <span class="bipes-block bg-orange-300 text-orange-900">Imprimir (Juntar Texto 'Temp: ' + 'temp')</span>
+                        <span class="bipes-block bg-orange-300 text-orange-900">Imprimir (Juntar Texto 'Umidade: ' + 'umid')</span>
+                        <span class="bipes-block bg-gray-300 text-gray-900">Esperar (2) segundos</span>
+                    </div>
+                `,
+                python_code: `# Python no BIPES (MicroPython)
+import dht
+from machine import Pin
+import time
+
+d = dht.DHT11(Pin(4))
+
+while True:
+    # Leitura dos dados (demora um pouco)
+    d.measure() 
+
+    temperatura = d.temperature()
+    umidade = d.humidity()
+    print(f"Temp: {temperatura}°C, Umidade: {umidade}%")
+    time.sleep(2)
+                `
+            },
+            'BMP280': {
+                name: 'BMP280 (Pressão e Temp.)',
+                type: 'I2C (SDA/SCL)',
+                pin_concept: 'Interface de comunicação Serial (I2C) - Pinos compartilhados por vários sensores.',
+                pin_example: 'SCL (Clock) = GPIO 22, SDA (Data) = GPIO 21. Estes são os pinos I2C padrão do ESP32.',
+                bipes_logic: "Use os blocos na seção 'I2C' e 'Sensores' para configurar a porta (GPIO 21/22) e depois chamar a função 'Ler BMP280'.",
+                bipes_blocks: `
+                    <span class="bipes-block bg-purple-300 text-purple-900">I2C Config (SCL: 22, SDA: 21) como 'i2c'</span>
+                    <span class="bipes-block bg-yellow-300 text-yellow-900">Configurar BMP280 (I2C: 'i2c') como 'bmp'</span>
+                    <span class="bipes-block bg-pink-300 text-pink-900">LOOP INFINITO (while True)</span>
+                    <div class="ml-4 flex flex-col">
+                        <span class="bipes-block">VARIÁVEL 'pressao' = Ler Pressão do 'bmp'</span>
+                        <span class="bipes-block">VARIÁVEL 'temperatura' = Ler Temperatura do 'bmp'</span>
+                        <span class="bipes-block bg-orange-300 text-orange-900">Imprimir (Juntar Texto 'Pressão: ' + 'pressao')</span>
+                        <span class="bipes-block bg-gray-300 text-gray-900">Esperar (5) segundos</span>
+                    </div>
+                `,
+                python_code: `# Python no BIPES (MicroPython)
+import bmp280
+from machine import Pin, I2C
+import time
+
+# Configura I2C (exemplo: SCL=22, SDA=21)
+i2c = I2C(1, scl=Pin(22), sda=Pin(21), freq=400000)
+
+sensor = bmp280.BMP280(i2c)
+
+while True:
+    temperatura = sensor.temperature()
+    pressao = sensor.pressure()
+    print(f"Temp: {temperatura}°C, Pressão: {pressao}hPa")
+    time.sleep(5)
+                `
+            },
+            'MPU6050': {
+                name: 'MPU6050 (Acelerômetro e Giroscópio)',
+                type: 'I2C (SDA/SCL)',
+                pin_concept: 'Também usa a interface I2C. Compartilha os mesmos pinos com o BMP280.',
+                pin_example: 'SCL (Clock) = GPIO 22, SDA (Data) = GPIO 21. Se usar com BMP280, ambos se conectam a 21/22.',
+                bipes_logic: "Assim como o BMP280, use os blocos I2C e o bloco dedicado 'MPU6050' para ler dados como aceleração (X, Y, Z) e rotação.",
+                bipes_blocks: `
+                    <span class="bipes-block bg-purple-300 text-purple-900">I2C Config (SCL: 22, SDA: 21) como 'i2c'</span>
+                    <span class="bipes-block bg-yellow-300 text-yellow-900">Configurar MPU6050 (I2C: 'i2c') como 'mpu'</span>
+                    <span class="bipes-block bg-pink-300 text-pink-900">LOOP INFINITO (while True)</span>
+                    <div class="ml-4 flex flex-col">
+                        <span class="bipes-block">VARIÁVEL 'aceleracao' = MPU6050 Get Values do 'mpu'</span>
+                        <span class="bipes-block">VARIÁVEL 'acel_x' = Aceleração X de 'aceleracao'</span>
+                        <span class="bipes-block bg-orange-300 text-orange-900">Imprimir (Juntar Texto 'AX: ' + 'acel_x')</span>
+                        <span class="bipes-block bg-gray-300 text-gray-900">Esperar (0.5) segundos</span>
+                    </div>
+                `,
+                python_code: `# Python no BIPES (MicroPython)
+import mpu6050
+from machine import Pin, I2C
+import time
+
+# Configura I2C (exemplo: SCL=22, SDA=21)
+i2c = I2C(1, scl=Pin(22), sda=Pin(21), freq=400000)
+
+sensor = mpu6050.accel(i2c)
+
+while True:
+    aceleracao_xyz = sensor.get_values()
+    # Exemplo: Aceleracao_X é aceleracao_xyz['AcX']
+    print(f"Aceleração X: {aceleracao_xyz['AcX']}")
+    time.sleep(0.5)
+                `
+            },
+            'BMY271': {
+                name: 'BMY271 (Magnetômetro e Bússola)',
+                type: 'I2C (SDA/SCL)',
+                pin_concept: 'Interface de comunicação Serial (I2C) - Compartilha os pinos SDA e SCL.',
+                pin_example: 'SCL (Clock) = GPIO 22, SDA (Data) = GPIO 21. Pode ser usado com BMP280 e MPU6050.',
+                bipes_logic: "É um sensor I2C. Você deve configurar a porta I2C e, em seguida, usar o bloco dedicado para 'BMY271' para ler o campo magnético (eixo X, Y e Z).",
+                bipes_blocks: `
+                    <span class="bipes-block bg-purple-300 text-purple-900">I2C Config (SCL: 22, SDA: 21) como 'i2c'</span>
+                    <span class="bipes-block bg-yellow-300 text-yellow-900">Configurar BMY271 (I2C: 'i2c') como 'bmy'</span>
+                    <span class="bipes-block bg-pink-300 text-pink-900">LOOP INFINITO (while True)</span>
+                    <div class="ml-4 flex flex-col">
+                        <span class="bipes-block">VARIÁVEL 'mag' = BMY271 Get Magnetic Field do 'bmy'</span>
+                        <span class="bipes-block">VARIÁVEL 'mag_x' = Valor X de 'mag'</span>
+                        <span class="bipes-block bg-orange-300 text-orange-900">Imprimir (Juntar Texto 'Mag X: ' + 'mag_x')</span>
+                        <span class="bipes-block bg-gray-300 text-gray-900">Esperar (1) segundos</span>
+                    </div>
+                `,
+                python_code: `# Python no BIPES (MicroPython)
+import bmy271 # Biblioteca assumida para BIPES
+from machine import Pin, I2C
+import time
+
+# Configura I2C (exemplo: SCL=22, SDA=21)
+i2c = I2C(1, scl=Pin(22), sda=Pin(21), freq=400000)
+
+sensor = bmy271.BMY271(i2c)
+
+while True:
+    # Retorna campo magnético nos 3 eixos (assumindo formato de lista/tupla)
+    mag_values = sensor.read_magnetic_field() 
+    
+    mag_x = mag_values[0]
+    mag_y = mag_values[1]
+    mag_z = mag_values[2]
+
+    print(f"Mag X: {mag_x}, Y: {mag_y}, Z: {mag_z}")
+    time.sleep(1)
+                `
+            }
+        };
+
+        // --- Renderização de Conteúdo ---
+
+        function getStepContent(step) {
+            switch (step) {
+                case 0:
+                    return `
+                        <div class="space-y-6">
+                            <h2 class="text-2xl font-bold text-gray-700">Olá, Futurista Espacial! 👋</h2>
+                            <p class="text-gray-600">
+                                Vamos montar a base de software da sua estação de telemetria para as Olimpíadas de Satélites usando o **ESP32** e a plataforma **BIPES** (Blockly/Python).
+                            </p>
+                            <p class="text-gray-600 p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                                Nosso foco será em responder à pergunta essencial: **Qual pino devo usar?** E como o BIPES traduz essa escolha para o código.
+                            </p>
+                            <ul class="list-disc list-inside text-gray-600 space-y-2 ml-4">
+                                <li><strong>LDR:</strong> Luminosidade (Analógico)</li>
+                                <li><strong>DHT11:</strong> Temperatura e Umidade (Digital)</li>
+                                <li><strong>BMP280:</strong> Pressão e Temperatura (I2C)</li>
+                                <li><strong>MPU6050:</strong> Acelerômetro e Giroscópio (I2C)</li>
+                                <li><strong class="text-purple-600">BMY271:</strong> Magnetômetro e Bússola (I2C)</li>
+                            </ul>
+                        </div>
+                    `;
+                case 1:
+                    return `
+                        <div class="space-y-6">
+                            <h2 class="text-2xl font-bold text-gray-700">Passo 1: Entendendo os Pinos GPIO da ESP32</h2>
+                            <p class="text-gray-600">
+                                O ESP32 possui cerca de 30 pinos GPIO (General Purpose Input/Output). Cada pino não é igual! Eles se dividem em três tipos principais de comunicação necessários para nossos sensores:
+                            </p>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                                <div class="p-4 bg-blue-50 border-b-4 border-blue-500 rounded-lg">
+                                    <h3 class="font-bold text-lg text-blue-700">Digital</h3>
+                                    <p class="text-sm text-gray-600">Lê/Escreve 0 ou 1 (Ex: Ligar LED, ler botão, DHT11).</p>
+                                </div>
+                                <div class="p-4 bg-green-50 border-b-4 border-green-500 rounded-lg">
+                                    <h3 class="font-bold text-lg text-green-700">Analógico (ADC)</h3>
+                                    <p class="text-sm text-gray-600">Lê valores contínuos (0 a 3.3V) e os converte (Ex: LDR).</p>
+                                </div>
+                                <div class="p-4 bg-purple-50 border-b-4 border-purple-500 rounded-lg">
+                                    <h3 class="font-bold text-lg text-purple-700">I2C (SDA/SCL)</h3>
+                                    <p class="text-sm text-gray-600">Protocolo de 2 fios para múltiplos sensores (Ex: BMP280, MPU6050, **BMY271**).</p>
+                                </div>
+                            </div>
+                            
+                            <h3 class="text-xl font-semibold text-red-600 mt-6">⚠️ Pinos a Evitar (Pinos de Boot)</h3>
+                            <p class="text-gray-600">
+                                Alguns pinos (GPIO 0, 2, 5, 12, 15) são usados durante a inicialização (boot) do ESP32. Se o seu sensor puxar este pino para o nível errado durante o boot, o ESP32 pode falhar ao ligar ou entrar em modo de programação. Prefira pinos sem funções críticas (Ex: GPIO 4, 16, 17, 18, 19, 23, 32, 33, 34, etc.).
+                            </p>
+                            
+                            <div class="flex justify-center mt-6">
+                                [Image of ESP32 Pinout Diagram]
+                            </div>
+                        </div>
+                    `;
+                case 2:
+                    return `
+                        <div class="space-y-6">
+                            <h2 class="text-2xl font-bold text-gray-700">Passo 2: Conexão Pin-a-Pin (Detalhada)</h2>
+                            <p class="text-gray-600">
+                                Selecione um sensor na lista abaixo para ver o tipo de comunicação, o conceito do pino e a equivalência entre o **MicroPython** e os **Blocos BIPES**.
+                            </p>
+                            
+                            <!-- Sensor Selection Tabs -->
+                            <div class="flex flex-wrap gap-2 mb-6">
+                                ${Object.keys(sensorsData).map(key => `
+                                    <button onclick="selectSensor('${key}')"
+                                        class="px-4 py-2 text-sm font-medium rounded-full transition-colors ${currentSensor === key ? 'bg-emerald-500 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
+                                        ${sensorsData[key].name.split(' ')[0].replace('(', '')}
+                                    </button>
+                                `).join('')}
+                            </div>
+                            
+                            <!-- Sensor Detail Panel -->
+                            ${renderSensorDetails()}
+                        </div>
+                    `;
+                case 3:
+                    return `
+                        <div class="space-y-6">
+                            <h2 class="text-2xl font-bold text-gray-700">Passo 3: Programando no BIPES (Lógica por Bloco)</h2>
+                            <p class="text-gray-600">
+                                A beleza do BIPES é a tradução instantânea. Veja o conceito dos blocos necessários para cada tipo de sensor:
+                            </p>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <!-- Coluna 1: Digital/Analógico -->
+                                <div class="p-6 bg-pink-50 rounded-lg shadow-md">
+                                    <h3 class="text-xl font-bold text-pink-700 mb-4">Sensores de Leitura Direta (LDR, DHT11)</h3>
+                                    <p class="text-gray-600 mb-4">
+                                        A leitura é feita diretamente após a inicialização do pino/sensor, geralmente em um loop.
+                                    </p>
+                                    <div class="bipes-container">
+                                        <span class="bipes-block bg-pink-300 text-pink-900">LOOP INFINITO (while True)</span>
+                                        <div class="ml-4 flex flex-col">
+                                            <span class="bipes-block">ADC: Leitura Analógica (PIN)</span>
+                                            <span class="bipes-block">DHT: dht.measure()</span>
+                                            <span class="bipes-block bg-orange-300 text-orange-900">Imprimir (Juntar Texto...)</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm mt-3 text-gray-500">
+                                        **Equivalência Python:** <code class="bg-gray-100 p-1 rounded">adc.read()</code> ou <code class="bg-gray-100 p-1 rounded">d.temperature()</code>.
+                                    </p>
+                                </div>
+                                
+                                <!-- Coluna 2: I2C -->
+                                <div class="p-6 bg-yellow-50 rounded-lg shadow-md">
+                                    <h3 class="text-xl font-bold text-yellow-700 mb-4">Sensores I2C (BMP280, MPU6050, BMY271)</h3>
+                                    <p class="text-gray-600 mb-4">
+                                        Protocolo requer 3 blocos em sequência: Configurar Comunicação, Configurar Sensor, Ler. **Todos usam SDA/SCL (21/22).**
+                                    </p>
+                                    <div class="bipes-container">
+                                        <span class="bipes-block bg-purple-300 text-purple-900">1. I2C Config (SCL/SDA) como 'i2c'</span>
+                                        <span class="bipes-block bg-yellow-300 text-yellow-900">2. Configurar BMP/MPU/BMY (I2C: 'i2c') como 'sensor'</span>
+                                        <span class="bipes-block bg-pink-300 text-pink-900">3. LOOP INFINITO (while True)</span>
+                                        <div class="ml-4 flex flex-col">
+                                            <span class="bipes-block">VARIÁVEL = Ler [DADO] do 'sensor'</span>
+                                            <span class="bipes-block bg-orange-300 text-orange-900">Imprimir (Juntar Texto...)</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm mt-3 text-gray-500">
+                                        **Equivalência Python:** <code class="bg-gray-100 p-1 rounded">I2C(1, scl=Pin(22), ...)</code> seguido de <code class="bg-gray-100 p-1 rounded">sensor.read_magnetic_field()</code>.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <h3 class="text-xl font-bold text-gray-700 mt-6">A Ferramenta Essencial: O Console</h3>
+                            <p class="text-gray-600">
+                                Sempre use o bloco <code class="bg-gray-100 p-1 rounded">print()</code> (Bloco Laranja) para enviar os dados lidos para o Console Serial (ou REPL) do BIPES. Na telemetria, você enviaria esses dados do <code class="bg-gray-100 p-1 rounded">print()</code> para um servidor ou banco de dados via Wi-Fi ou LoRa.
+                            </p>
+                        </div>
+                    `;
+                case 4:
+                    return `
+                        <div class="space-y-6 text-center">
+                            <h2 class="text-3xl font-bold text-emerald-700">Próximo Passo: Código Completo de Telemetria</h2>
+                            <p class="text-xl text-gray-700">
+                                Chegamos ao momento de unir toda a lógica: leitura dos 5 sensores e envio dos dados para o servidor da OBSAT.
+                            </p>
+                            
+                            <div class="p-6 bg-emerald-50 rounded-xl shadow-lg border border-emerald-200 inline-block text-left">
+                                <h3 class="text-2xl font-semibold text-emerald-800 mb-4">Lógica Central de Telemetria:</h3>
+                                <ul class="list-disc list-inside text-gray-700 space-y-2 ml-4">
+                                    <li>**Conexão Wi-Fi:** Estabelecer a comunicação com a rede.</li>
+                                    <li>**JSON:** Estruturar os dados de forma legível e padronizada.</li>
+                                    <li>**HTTP POST:** Enviar o pacote JSON para o endpoint: <code class="bg-gray-100 p-1 rounded text-red-600">https://obsat.org.br/teste_post/envio_bipes.php</code></li>
+                                </ul>
+                            </div>
+                            
+                            <h3 class="text-xl font-bold text-gray-700 mt-8">Clique em "Próximo" para ver o Código Final!</h3>
+                        </div>
+                    `;
+                case 5: // Novo Passo com o código completo
+                    return `
+                        <div class="space-y-6">
+                            <h2 class="text-2xl font-bold text-gray-700">Passo 4: 🛰️ Código Completo OBSAT Telemetria (MicroPython)</h2>
+                            <p class="text-gray-600">
+                                Este é o programa final que você pode carregar no seu ESP32 usando o BIPES. **Lembre-se de substituir o SSID e a Senha da sua rede Wi-Fi!**
+                            </p>
+                            
+                            <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                                **Atenção:** Este código requer que as bibliotecas MicroPython dos sensores I2C (BMP280, MPU6050, BMY271) e o <code class="bg-gray-100 p-1 rounded">urequests</code> estejam disponíveis no ambiente BIPES/firmware do ESP32.
+                            </div>
+
+                            <h3 class="font-semibold text-lg text-gray-700 mt-4">MicroPython Code for BIPES:</h3>
+                            <pre class="bg-gray-800 text-white p-4 rounded-lg text-xs overflow-x-auto h-96 md:h-[600px]">${`# CÓDIGO MICROPYTHON COMPLETO PARA BIPES (TELEMETRIA OBSAT)
+# PINOS USADOS:
+# LDR (Analógico): GPIO 34
+# DHT11 (Digital): GPIO 4
+# I2C (Todos): SDA=GPIO 21, SCL=GPIO 22
+
+from machine import Pin, ADC, I2C
+import time
+import ujson
+import dht
+import network # Para conexão Wi-Fi
+import urequests # Para requisições HTTP
+
+# --- CONFIGURAÇÃO DE REDE (Substitua pelos seus dados) ---
+WIFI_SSID = "SUA_REDE" # <-- SUBSTITUA
+WIFI_PASS = "SUA_SENHA" # <-- SUBSTITUA
+SERVER_URL = "https://obsat.org.br/teste_post/envio_bipes.php"
+
+# --- 1. FUNÇÃO DE CONEXÃO WIFI ---
+def connect_wifi():
+    sta_if = network.WLAN(network.STA_IF)
+    if not sta_if.isconnected():
+        print("Conectando ao WiFi...")
+        sta_if.active(True)
+        sta_if.connect(WIFI_SSID, WIFI_PASS)
+        timeout = 15
+        while not sta_if.isconnected() and timeout > 0:
+            time.sleep(1)
+            print(".", end="")
+            timeout -= 1
+        print("\nConexão:", sta_if.isconnected())
+    return sta_if.isconnected()
+
+# --- 2. CONFIGURAÇÃO DE SENSORES ---
+
+# Analógico (LDR)
+adc = ADC(Pin(34))
+adc.atten(ADC.ATTN_11DB) # Configura faixa de 0 a 3.3V
+
+# Digital (DHT11)
+dht_sensor = dht.DHT11(Pin(4))
+
+# I2C (BMP280, MPU6050, BMY271 - Compartilham a mesma porta)
+i2c = I2C(1, scl=Pin(22), sda=Pin(21), freq=400000)
+
+# Inicialização das bibliotecas dos sensores I2C (bibliotecas assumidas)
+bmp, mpu, bmy = None, None, None
+try:
+    import bmp280
+    import mpu6050
+    import bmy271 
+
+    bmp = bmp280.BMP280(i2c)
+    mpu = mpu6050.accel(i2c)
+    bmy = bmy271.BMY271(i2c)
+    print("Sensores I2C inicializados com sucesso.")
+except Exception as e:
+    print(f"Alerta: Erro ao inicializar I2C. Sensores I2C desabilitados. Erro: {e}")
+
+
+# --- 3. LOOP PRINCIPAL DE LEITURA E ENVIO ---
+if connect_wifi():
+    print("Conexão Wi-Fi estabelecida. Iniciando telemetria...")
+    while True:
+        try:
+            # --- LEITURA DE DADOS ---
+            
+            # LDR
+            luz = adc.read()
+            
+            # DHT11
+            dht_sensor.measure()
+            temp_dht = dht_sensor.temperature()
+            umidade = dht_sensor.humidity()
+            
+            # BMP280
+            temp_bmp = bmp.temperature() if bmp else -99
+            pressao = bmp.pressure() if bmp else -99
+            
+            # MPU6050
+            acel = mpu.get_values() if mpu else {'AcX': -99, 'AcY': -99, 'AcZ': -99}
+            
+            # BMY271
+            # Assumindo a função retorna [X, Y, Z]
+            mag_values = bmy.read_magnetic_field() if bmy else [-99, -99, -99] 
+            
+            # --- 4. FORMATAR EM JSON ---
+            telemetry_data = {
+                "timestamp": time.time(),
+                "sensor_data": {
+                    "Luz": luz,
+                    "Temp_DHT": temp_dht,
+                    "Umidade": umidade,
+                    "Temp_BMP": temp_bmp,
+                    "Pressao": pressao,
+                    "AcX": acel['AcX'],
+                    "AcY": acel['AcY'],
+                    "AcZ": acel['AcZ'],
+                    "MagX": mag_values[0],
+                    "MagY": mag_values[1],
+                    "MagZ": mag_values[2]
+                }
+            }
+            json_payload = ujson.dumps(telemetry_data)
+            
+            print("Payload JSON pronto:", json_payload)
+            
+            # --- 5. ENVIAR VIA HTTP POST ---
+            response = urequests.post(
+                SERVER_URL, 
+                data=json_payload, 
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            print(f"Status HTTP: {response.status_code}")
+            print(f"Resposta do Servidor: {response.text}")
+            response.close()
+            
+        except ImportError:
+            # Se urequests falhar ao importar (BIPES/Firmware não o tiver)
+            print("ERRO: Biblioteca 'urequests' não encontrada. Verifique o firmware.")
+
+        except Exception as e:
+            print(f"ERRO DE ENVIO/LEITURA: {e}")
+        
+        # Espera antes da próxima leitura/envio
+        time.sleep(10) # Envia dados a cada 10 segundos
+else:
+    print("Falha na conexão Wi-Fi. O código de telemetria não pode iniciar.")`}</pre>
+                            
+                            <!-- NOVO BLOCO: REPRESENTAÇÃO BIPES -->
+                            <h3 class="font-semibold text-lg text-gray-700 mt-8">Representação Lógica em Blocos BIPES:</h3>
+                            <div class="p-6 bg-blue-50 border-2 border-blue-200 rounded-xl space-y-4">
+                                <h4 class="font-bold text-blue-800">1. SETUP INICIAL E SENSORES (FORA DO LOOP)</h4>
+                                <div class="bipes-container min-h-0">
+                                    <span class="bipes-block bg-yellow-400 text-yellow-900">Bloco de Configuração WiFi (SSID: "SUA_REDE", Senha: "SUA_SENHA")</span>
+                                    <span class="bipes-block bg-purple-300 text-purple-900">I2C Config (SCL: 22, SDA: 21) como 'i2c'</span>
+                                    <span class="bipes-block bg-yellow-300 text-yellow-900">Configurar BMP280 (I2C: 'i2c') como 'bmp'</span>
+                                    <span class="bipes-block bg-yellow-300 text-yellow-900">Configurar MPU6050 (I2C: 'i2c') como 'mpu'</span>
+                                    <span class="bipes-block bg-yellow-300 text-yellow-900">Configurar BMY271 (I2C: 'i2c') como 'bmy'</span>
+                                    <span class="bipes-block bg-yellow-300 text-yellow-900">Inicializar DHT11 (Pino: 4) como 'dht'</span>
+                                    <span class="bipes-block bg-green-300 text-green-900">ADC (LDR) - Configurado implicitamente ao usar o bloco 'Leitura Analógica' (PIN: 34)</span>
+                                </div>
+                                
+                                <h4 class="font-bold text-blue-800">2. LOOP DE LEITURA E ENVIO (Dentro do while True)</h4>
+                                <div class="bipes-container min-h-0">
+                                    <span class="bipes-block bg-pink-300 text-pink-900">LOOP INFINITO (SE Wi-Fi Conectado)</span>
+                                    <div class="ml-4 flex flex-col space-y-2">
+                                        
+                                        <span class="bipes-block text-gray-800 font-bold">-- 2.1 LEITURA DOS SENSORES --</span>
+                                        <span class="bipes-block">VARIÁVEL 'Luz' = Leitura Analógica (PIN: 34)</span>
+                                        <span class="bipes-block">Chamar 'dht.measure()'</span>
+                                        <span class="bipes-block">VARIÁVEL 'Temp_DHT' = dht.temperature()</span>
+                                        <span class="bipes-block">VARIÁVEL 'Pressao' = Ler Pressão do 'bmp'</span>
+                                        <span class="bipes-block">VARIÁVEL 'Aceleracao' = MPU6050 Get Values do 'mpu'</span>
+                                        <span class="bipes-block">VARIÁVEL 'Magneto' = BMY271 Get Magnetic Field do 'bmy'</span>
+
+                                        <span class="bipes-block text-gray-800 font-bold">-- 2.2 CRIAÇÃO E ENVIO DO JSON --</span>
+                                        <span class="bipes-block bg-orange-500 text-white">VARIÁVEL 'Payload' = CRIAR DICIONÁRIO JSON (Com 10 CHAVES/VALORES de sensores + timestamp)</span>
+                                        
+                                        <div class="ml-4 flex flex-col">
+                                            <span class="bipes-block bg-orange-300 text-orange-900">Adicionar CHAVE: "Luz", VALOR: 'Luz'</span>
+                                            <span class="bipes-block bg-orange-300 text-orange-900">Adicionar CHAVE: "Temp_DHT", VALOR: 'Temp_DHT'</span>
+                                            <span class="bipes-block bg-orange-300 text-orange-900">... (e 8 chaves restantes) ...</span>
+                                        </div>
+                                        
+                                        <span class="bipes-block bg-blue-500 text-white">HTTP POST (URL: "https://obsat.org.br/...") com JSON: 'Payload'</span>
+                                        <span class="bipes-block bg-orange-300 text-orange-900">Imprimir Status da Resposta (Bloco 'network.response_status_code')</span>
+                                        <span class="bipes-block bg-gray-300 text-gray-900">Esperar (10) segundos</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mt-6">
+                                <h3 class="text-2xl font-bold text-emerald-700">✨ Fim da Aula! ✨</h3>
+                                <p class="text-lg text-gray-600">
+                                    Agora você tem o código base para sua missão de satélite. Basta ajustá-lo e carregá-lo!
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                default:
+                    return '<p class="text-red-500">Erro: Passo inválido.</p>';
+            }
+        }
+
+        function renderSensorDetails() {
+            const data = sensorsData[currentSensor];
+            if (!data) return '';
+
+            return `
+                <div class="p-6 border rounded-lg shadow-xl bg-white border-l-4 border-emerald-500">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">${data.name} (${data.type})</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Conexão -->
+                        <div>
+                            <p class="font-semibold text-gray-700 mb-2">Conceito do Pino:</p>
+                            <p class="text-gray-600 mb-4 text-sm">${data.pin_concept}</p>
+                            <p class="font-semibold text-gray-700 mb-2">Pino de Exemplo na ESP32:</p>
+                            <code class="block bg-gray-100 p-3 rounded-lg text-sm text-red-600 font-mono">${data.pin_example}</code>
+                        </div>
+
+                        <!-- Lógica BIPES (Blocos) -->
+                        <div>
+                            <p class="font-semibold text-gray-700 mb-2">Lógica no BIPES (Blocos):</p>
+                            <div class="bipes-container h-full">
+                                ${data.bipes_blocks}
+                            </div>
+                        </div>
+
+                        <!-- Lógica Python -->
+                        <div>
+                            <p class="font-semibold text-gray-700 mb-2">MicroPython Gerado:</p>
+                            <pre class="bg-gray-800 text-white p-3 rounded-lg text-xs overflow-x-auto h-full max-h-40 md:max-h-full">${data.python_code.trim()}</pre>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectSensor(sensorKey) {
+            currentSensor = sensorKey;
+            render();
+        }
+
+        // --- Navegação e Renderização Principal ---
+
+        function updateButtons() {
+            document.getElementById('prev-btn').disabled = (step === 0);
+            document.getElementById('next-btn').disabled = (step === totalSteps);
+            document.getElementById('next-btn').textContent = (step === totalSteps) ? 'Fim da Aula' : 'Próximo →';
+        }
+
+        function render() {
+            const contentDiv = document.getElementById('lesson-content');
+            
+            // Renderiza o novo conteúdo com a transição
+            const oldContent = contentDiv.querySelector('.step-content');
+            if (oldContent) {
+                oldContent.classList.remove('active-step');
+                // Pequeno delay para a animação de saída
+                setTimeout(() => {
+                    contentDiv.innerHTML = `<div class="step-content">${getStepContent(step)}</div>`;
+                    // Pequeno delay para a animação de entrada
+                    setTimeout(() => {
+                        contentDiv.querySelector('.step-content').classList.add('active-step');
+                    }, 50);
+                }, 300); // Tempo da transição
+            } else {
+                 contentDiv.innerHTML = `<div class="step-content">${getStepContent(step)}</div>`;
+                 setTimeout(() => {
+                    contentDiv.querySelector('.step-content').classList.add('active-step');
+                }, 50);
+            }
+
+            updateButtons();
+        }
+
+        function nextStep() {
+            if (step < totalSteps) {
+                step++;
+                render();
+            }
+        }
+
+        function prevStep() {
+            if (step > 0) {
+                step--;
+                render();
+            }
+        }
+
+        // Inicializa a aula
+        document.addEventListener('DOMContentLoaded', render);
+
+    </script>
+</body>
+</html>
